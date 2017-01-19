@@ -47,6 +47,7 @@ int main() {
   		printf("\tX: %f\t Y: %f\t Z: %f\t||", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 		printf("\tX: %f\t Y: %f\t Z: %f\n", x_ang, y_ang, z_ang); 
 		usleep(SAMPLE_TIME);
-	}	
+	}
+    
 	return 0;	
 }
