@@ -29,6 +29,7 @@ volatile float integralFBx = 0.0f,  integralFBy = 0.0f, integralFBz = 0.0f;	// i
 
 void MahonyAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az);
 float invSqrt(float x);
+void Quat2Euler(float q0, float q1, float q2, float q3, float* x, float* y, float* z);
 
 
 //--------- Main ---------//
@@ -81,15 +82,11 @@ int main() {
         MahonyAHRSupdateIMU(gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z, accel_data.x, accel_data.y, accel_data.z);
         
         float roll, pitch, yaw;
-        Quat2Euler(q0, q1, q2, q3, roll, pitch, yaw);
-        printf("x: %f\t y: %f\t z: %f\n", roll, pitch, yaw);
+        Quat2Euler(q0, q1, q2, q3, &roll, &pitch, &yaw);
+        printf("x: %f\t y: %f\t z: %f\n", roll, pitch, yaw);
         usleep(SAMPLE_TIME);
     }
-
-	
     
-
-
 	return 0;	
 }
 
@@ -159,26 +156,25 @@ void MahonyAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float
 	q3 *= recipNorm;
 }
 
-void Quat2Euler(const float& q0, const float& q1, const float& q2, const float& q3, 
-		float& x, float& y, float& z)
+void Quat2Euler(float q0, float q1, float q2, float q3, float* x, float* y, float* z)
 {
 	float ysqr = q2 * q2;
 
 	// roll (x-axis rotation)
 	double t0 = +2.0f * (q0 * q1 + q2 * q3);
 	double t1 = +1.0f - 2.0f * (q1 * q1 + ysqr);
-	x = atan2(t0, t1);
+	*x = atan2(t0, t1);
 
 	// pitch (y-axis rotation)
 	double t2 = +2.0f * (q0 * q2 - q1 * q3);
 	t2 = t2 > 1.0f ? 1.0f : t2;
 	t2 = t2 < -1.0f ? -1.0f : t2;
-	y = asin(t2);
+	*y = asin(t2);
 
 	// yaw (z-axis rotation)
 	double t3 = +2.0f * (q0 * q3 + q1 * q2);
 	double t4 = +1.0f - 2.0f * (ysqr + q3 * q3);  
-	z = atan2(t3, t4);
+	*z = atan2(t3, t4);
 }
 
 float invSqrt(float x) {
