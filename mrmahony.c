@@ -3,16 +3,17 @@
 #include "LSM9DS0.h"
 
 #include <math.h>
-#include “MahoneyAHRS.h”
+#include "MahonyAHRS.h"
 
 //--------- Original Definitions ---------//
 #define SAMPLE_TIME 50000
 #define MILLION 1000000
-
+#define PI	3.141592653
 
 //--------- Mahoney Definitions ---------//
 
-#define sampleFreq	512.0f		// sample frequency in Hz
+//#define sampleFreq	512.0f		// sample frequency in Hz
+#define sampleFreq 	768.0f
 #define twoKpDef	(2.0f * 0.5f)	// 2 * proportional gain
 #define twoKiDef	(2.0f * 0.0f)	// 2 * integral gain
 
@@ -79,22 +80,28 @@ int main() {
 //	}
     
     while(1) {
+	accel_data = read_accel(accel, a_res);
+	gyro_data = read_gyro(gyro, g_res);
+	
         MahonyAHRSupdateIMU(gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z, accel_data.x, accel_data.y, accel_data.z);
         
         float roll, pitch, yaw;
+	printf("q0: %f\t q1: %f\t q2: %f\t q3:%f\t||\t", q0, q1, q2, q3);
         Quat2Euler(q0, q1, q2, q3, &roll, &pitch, &yaw);
-        printf("x: %f\t y: %f\t z: %f\n", roll, pitch, yaw);
+        printf("x: %f\t y: %f\t z: %f\n", roll, pitch, yaw);
         usleep(SAMPLE_TIME);
     }
     
 	return 0;	
 }
 
-void MahonyAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float az) {
+void MahonyAHRSupdateIMU(float gx, float gy, float gz, 
+		float ax, float ay, float az) {
 	float recipNorm;
 	float halfvx, halfvy, halfvz;
 	float halfex, halfey, halfez;
 	float qa, qb, qc;
+
 
 	// Compute feedback only if accelerometer measurement valid (avoids NaN in accelerometer normalisation)
 	if(!((ax == 0.0f) && (ay == 0.0f) && (az == 0.0f))) {
@@ -156,25 +163,30 @@ void MahonyAHRSupdateIMU(float gx, float gy, float gz, float ax, float ay, float
 	q3 *= recipNorm;
 }
 
-void Quat2Euler(float q0, float q1, float q2, float q3, float* x, float* y, float* z)
+void Quat2Euler(float q0, float q1, float q2, float q3, 
+		float* x, float* y, float* z)
 {
+
+	float xsqr = q1 * q1;
 	float ysqr = q2 * q2;
+	float zsqr = q3 * q3;
 
 	// roll (x-axis rotation)
-	double t0 = +2.0f * (q0 * q1 + q2 * q3);
-	double t1 = +1.0f - 2.0f * (q1 * q1 + ysqr);
-	*x = atan2(t0, t1);
+	float t3 = +2.0f * (q1*q0 - q2*q3);
+	float t4 = +1.0f - 2.0f * (xsqr + zsqr);
+	*z = atan2(t3, t4)*180.0/PI;
 
 	// pitch (y-axis rotation)
-	double t2 = +2.0f * (q0 * q2 - q1 * q3);
+	float t2 = +2.0f * (q1 * q2 + q0 * q3);
 	t2 = t2 > 1.0f ? 1.0f : t2;
 	t2 = t2 < -1.0f ? -1.0f : t2;
-	*y = asin(t2);
+	*y = asin(t2)*180.0/PI;
 
 	// yaw (z-axis rotation)
-	double t3 = +2.0f * (q0 * q3 + q1 * q2);
-	double t4 = +1.0f - 2.0f * (ysqr + q3 * q3);  
-	*z = atan2(t3, t4);
+	float t0 = +2.0f*q2*q0 + 2.0f*q1*q3;
+	float t1 = +1.0f - 2.0f*(ysqr + zsqr);
+	*x = atan2(t0, t1)*180.0/PI;
+
 }
 
 float invSqrt(float x) {
