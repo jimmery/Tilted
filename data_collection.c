@@ -5,7 +5,17 @@
 #define SAMPLE_TIME 50000
 #define MILLION 1000000
 
+sig_atomic_t volatile run_flag = 1;
+
+void do_when_interrupted(int sig)
+{
+	if (sig == SIGINT)
+		run_flag = 0;
+}
+
 int main() {
+	signal(SIGINT, do_when_interrupted);
+
 	data_t accel_data, gyro_data;
 	data_t gyro_offset;
 	float a_res, g_res;
@@ -29,7 +39,7 @@ int main() {
 	fp = fopen("data.txt", "w+");
 
 	//Read the sensor data and print them.
-	while(1) {
+	while(run_flag) {
 		accel_data = read_accel(accel, a_res);
 		gyro_data = read_gyro(gyro, g_res);
 
@@ -38,8 +48,6 @@ int main() {
 		
 		usleep(SAMPLE_TIME);
 	}
-	return 0;
-	
-	
 	fclose(fp);
+	return 0;
 }
