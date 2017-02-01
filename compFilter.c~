@@ -7,14 +7,14 @@
 //#define ACCELEROMETER_SENSITIVITY 8192.0
 //#define GYROSCOPE_SENSITIVITY 65.536
 
-#define ACCELEROMETER_SENSITIVITY 0.1667
-#define GYROSCOPE_SENSITIVITY 0.1667
+#define ACCELEROMETER_SENSITIVITY 0.125
+#define GYROSCOPE_SENSITIVITY 0.125
 
 #define dt 0.01
 
 #define SAMPLE_TIME 50000
 
-void ComplementaryFilter(float accData[3], float gyrData[3], float *pitch, float *roll);
+void ComplementaryFilter(float accData[3], float gyrData[3], float *pitch, float *roll, float *yaw);
 
 int main() {
     data_t accel_data, gyro_data;
@@ -65,12 +65,13 @@ int main() {
     float gyrData[3] = {gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z};
     float pitch = 0.0f;
     float roll = 0.0f;
+    float yaw = 0.0f;
     
     while(1) {
 	
 	accel_data = read_accel(accel, a_res);
 	gyro_data = read_gyro(gyro, g_res);
-        ComplementaryFilter(accData, gyrData, &pitch, &roll);
+        ComplementaryFilter(accData, gyrData, &pitch, &roll, &yaw);
         
         accData[0] = accel_data.x;
         accData[1] = accel_data.y;
@@ -82,7 +83,7 @@ int main() {
         
         printf("X: %f\t Y: %f\t Z: %f\t||", accel_data.x, accel_data.y, accel_data.z);
         printf("\tX: %f\t Y: %f\t Z: %f\t||", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
-        printf("\tX: %f\t Y: %f\n", roll, pitch);
+        printf("\tX: %f\t Y: %f\t Z: %f\n", roll, pitch, yaw);
         
         usleep(SAMPLE_TIME);
     }
@@ -90,14 +91,15 @@ int main() {
     return 0;	
 }
 
-void ComplementaryFilter(float accData[3], float gyrData[3], float *pitch, float *roll)
+void ComplementaryFilter(float accData[3], float gyrData[3], float *pitch, float *roll, float *yaw)
 {
-    float pitchAcc, rollAcc;
+    float pitchAcc, rollAcc, yawAcc;
     
     // Integrate the gyroscope data -> int(angularSpeed) = angle
     *pitch += ((float)gyrData[0] / GYROSCOPE_SENSITIVITY) * dt; // Angle around the X-axis
     *roll -= ((float)gyrData[1] / GYROSCOPE_SENSITIVITY) * dt;    // Angle around the Y-axis
-    
+    *yaw += ((float)gyrData[2] / GYROSCOPE_SENSITIVITY) * dt;
+
     // Compensate for drift with accelerometer data if !bullshit
     // Sensitivity = -2 to 2 G at 16Bit -> 2G = 32768 && 0.5G = 8192
     int forceMagnitudeApprox = abs(accData[0]) + abs(accData[1]) + abs(accData[2]);
@@ -105,10 +107,13 @@ void ComplementaryFilter(float accData[3], float gyrData[3], float *pitch, float
     {
         // Turning around the X axis results in a vector on the Y-axis
         pitchAcc = atan2f((float)accData[1], (float)accData[2]) * 180 / M_PI;
-        *pitch = *pitch * 0.98 + pitchAcc * 0.02;
+        *pitch = *pitch * 0.5 + pitchAcc * 0.5;
         
         // Turning around the Y axis results in a vector on the X-axis
         rollAcc = atan2f((float)accData[0], (float)accData[2]) * 180 / M_PI;
-        *roll = *roll * 0.98 + rollAcc * 0.02;
+        *roll = *roll * 0.5 + rollAcc * 0.5;
+
+	yawAcc = atan2f((float)accData[2], (float)accData[2]) * 180 / M_PI;
+	*yaw = *yaw * 0.5 + yawAcc * 0.5;
     }
 }
