@@ -44,7 +44,7 @@ int main() {
 		gyro_data = read_gyro(gyro, g_res);
 
 		fprintf("%f,\t%f,\t%f,\t", accel_data.x, accel_data.y, accel_data.z);
-		printf("%f,\t%f,\t%f,\r\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
+		printf("%f,\t%f,\t%f\r\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 		
 		usleep(SAMPLE_TIME);
 	}
