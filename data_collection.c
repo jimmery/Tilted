@@ -46,13 +46,8 @@ int main() {
 		accel_data = read_accel(accel, a_res);
 		gyro_data = read_gyro(gyro, g_res);
 
-<<<<<<< HEAD
 		fprintf(fp, "%f\t%f\t%f\t", accel_data.x, accel_data.y, accel_data.z);
 		fprintf(fp, "%f\t%f\t%f\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
-=======
-		fprintf("%f,\t%f,\t%f,\t", accel_data.x, accel_data.y, accel_data.z);
-		printf("%f,\t%f,\t%f,\r\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
->>>>>>> ca618e1c105b5336caf0cb0d61f8ba0a49cf5b81
 		
 		usleep(SAMPLE_TIME);
 	}
