@@ -106,7 +106,7 @@ void ComplementaryFilter(float accData[3], float gyrData[3], float *pitch, float
         // Turning around the X axis results in a vector on the Y-axis
         pitchAcc = atan2f((float)accData[1], (float)accData[2]) * 180 / M_PI;
         *pitch = *pitch * 0.98 + pitchAcc * 0.02;
-        
+
         // Turning around the Y axis results in a vector on the X-axis
         rollAcc = atan2f((float)accData[0], (float)accData[2]) * 180 / M_PI;
         *roll = *roll * 0.98 + rollAcc * 0.02;

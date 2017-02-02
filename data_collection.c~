@@ -36,8 +36,6 @@ int main() {
 
 	gyro_offset = calc_gyro_offset(gyro, g_res);
 
-	printf("Start moving!\n");
-
 	FILE* fp;
 	fp = fopen("data.txt", "w+");
 
