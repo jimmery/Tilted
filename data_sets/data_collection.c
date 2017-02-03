@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <mraa/i2c.h>
 #include "LSM9DS0.h"
+#include <signal.h>
 
 #define SAMPLE_TIME 50000
 #define MILLION 1000000
@@ -34,6 +35,8 @@ int main() {
 	g_res = calc_gyro_res(g_scale);
 
 	gyro_offset = calc_gyro_offset(gyro, g_res);
+
+	printf("Start moving!\n");
 
 	FILE* fp;
 	fp = fopen("data.txt", "w+");
