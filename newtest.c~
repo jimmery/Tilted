@@ -13,7 +13,7 @@ struct Angle
 	double z;
 }Omega,current_data;
 
-#define microSeconds  10000 //0.1s or 10Hz
+#define microSeconds  100000 //0.1s or 10Hz
 
 const double time_interval = (double)microSeconds/1000000;
 
@@ -76,9 +76,9 @@ int main() {
 		MadgwickAHRSupdateIMU(current_data.x,current_data.y,current_data.z,accel_data.x,accel_data.y,accel_data.z);
 
 		//convert the quaternion representation to Euler Angles in radians
-		Omega.x = atan2(2*(q2*q3-q0*q1),2*q0*q0+2*q3*q3-1);
-		Omega.y =-1*asin((double)(2*(q0*q2+q1*q3)));
-		Omega.z = atan2(2*(q1*q2-q0*q3),2*q0*q0+2*q1*q1-1); 
+		Omega.x = atan2f(q0*q1 + q2*q3, 0.5f - q1*q1 - q2*q2);
+		Omega.y = asin2f(-2.0f * (q1*q3 - q0*q2));
+		Omega.z = atan2f(q1*q2 + q0*q3, 0.5f - q2*q2 - q3*q3); 
 		
 		
 
