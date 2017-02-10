@@ -53,6 +53,7 @@ int main() {
 	
 	printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
 	
+	
 	//Read the sensor data and print them.
 	while(1) {
 
@@ -79,16 +80,30 @@ int main() {
 		Omega.x = atan2f(q0*q1 + q2*q3, 0.5f - q1*q1 - q2*q2);
 		Omega.y = asinf(-2.0f * (q1*q3 - q0*q2));
 		Omega.z = atan2f(q1*q2 + q0*q3, 0.5f - q2*q2 - q3*q3); 
-		
-		
 
 		//convert Angles from  radians to degrees
 		Omega.x *= 180 / 3.14159265359;
 		Omega.y *= 180 / 3.14159265359;
 		Omega.z *= 180 / 3.14159265359;
-  		printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
-		printf("time %f\nOmegaX %f\nOmegaY %f \nOmegaZ %f\n\n", time_interval, Omega.x,Omega.y,Omega.z);
+
+		//gravity compensate
+		float grav[] = {0.0, 0.0, 0.0};
+		grav[0] = 2 * (q1 * q3 - q0 * q2);
+		grav[1] = 2 * (q0 * q1 + q2 * q3);
+		grav[2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+
+		float newaccX = accel_data.x - grav[0];
+		float newaccY = accel_data.y - grav[1];
+		float newaccZ = accel_data.z - grav[2];
+		
+
+		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
+		printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
+		printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
+		printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
 		usleep(microSeconds);
 	}	
 	return 0;	
 }
+
+
