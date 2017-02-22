@@ -14,7 +14,7 @@ struct Angle
 	double z;
 }Omega,current_data;
 
-#define microSeconds  50000 //0.1s or 10Hz
+#define microSeconds  40000 //0.1s or 10Hz
 
 const double time_interval = (double)microSeconds/1000000;
 

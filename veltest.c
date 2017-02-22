@@ -14,7 +14,7 @@ struct Angle
 	double z;
 }Omega,current_data;
 
-#define microSeconds  100000 //0.1s or 10Hz
+#define microSeconds  40000 //0.1s or 10Hz
 
 const double time_interval = (double)microSeconds/1000000;
 
@@ -51,16 +51,21 @@ const double time_interval = (double)microSeconds/1000000;
 	float y_avg = 0;
 	float z_avg = 0;
 
-int main() {
-
+int main(int argc, char **argv) {
+	int send = 0; 
+	//if ( argc > 0 )
+	//	send = 1;
 	//curl for firebase
+	//
 	CURL *curl;
 	CURLcode res;
-	curl_global_init(CURL_GLOBAL_ALL);
-	curl = curl_easy_init();
 
-	if(curl) {
-		curl_easy_setopt(curl, CURLOPT_URL, "https://tilted-4d2ee.firebaseio.com/points.json");
+	if (send) {
+		curl = curl_easy_init();
+
+		if(curl) {
+			curl_easy_setopt(curl, CURLOPT_URL, "https://tilted-4d2ee.firebaseio.com/points.json");
+		}
 	}
 
 	//variables
@@ -127,7 +132,6 @@ int main() {
 		Omega.x *= 180 / 3.14159265359;
 		Omega.y *= 180 / 3.14159265359;
 		Omega.z *= 180 / 3.14159265359;
-
 		
 
 		//gravity compensate
@@ -163,7 +167,7 @@ int main() {
 	else
 		countx = 0;
 
-	if(countx >= 10) {
+	if(countx >= 20) {
 		x_motion = 0;
 	}
 
@@ -172,7 +176,7 @@ int main() {
 	else
                 county = 0;
 
-	if(county >= 10) {
+	if(county >= 20) {
 		y_motion = 0;
 	}
 
@@ -181,7 +185,7 @@ int main() {
 	else
 		countz = 0;
 
-	if(countz >= 10) {
+	if(countz >= 20) {
 		z_motion = 0;
 	}
 
@@ -194,33 +198,35 @@ int main() {
 	//check motion and count accelerations over 1.2 m/s^2
 	if((x_acc_old > 1.2 || x_acc_old < -1.2) && x_motion == 1) {
 		x_counterP++;
-		x_avg += x_acc_old / (x_counterP * x_counterP);
-		x_pos += x_avg / 70;
+		x_avg += x_acc_old; // (x_counterP * x_counterP * 2);
+		//x_pos += x_avg / 70;
 	}
 	else {
-		x_avg = 0;
+	//	x_avg = 0;
 		x_counterP = 0;
 	}
 	if((y_acc_old > 1.2 || y_acc_old < -1.2) && y_motion == 1) {
 		y_counterP++;
-		y_avg += y_acc_old / (y_counterP * y_counterP);
-		y_pos += y_avg / 70;
+		y_avg += y_acc_old; // (y_counterP * y_counterP * 2);
+		
+		//if(y_avg 
+		//y_pos += y_avg / 70;
 	}	
 	else {
-		y_avg = 0;
+	//	y_avg = 0;
 		y_counterP = 0;
 	}
 	if((z_acc_old > 1.2 || z_acc_old < -1.2) && z_motion == 1) {
 		z_counterP++;
-		z_avg += z_acc_old / (z_counterP * z_counterP);
-		z_pos += z_avg / 70;
+		z_avg += z_acc_old; // (z_counterP * z_counterP * 2);
+		z_pos += z_avg;
 	}
 	else {
-		z_avg = 0;
+	//	z_avg = 0;
+		if (z_avg < 10 && z_avg > -10)
+			z_avg = 0;
 		z_counterP = 0;
 	}
-
-	
 		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 		printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
 		//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
@@ -228,9 +234,9 @@ int main() {
 		printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-		printf("x_pos: %f\t y_pos: %f\t z_pos: %f\n\n", x_pos, y_pos, z_pos);
+		printf("x_pos: %f\t y_pos: %f\t z_pos: %f\n\n", x_avg, y_avg, z_pos);
 
-	
+	if ( send ) {
 		//curl send message
 		char msg[100] = "";
 		sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
@@ -242,14 +248,17 @@ int main() {
 		//check for errors
 		if(res != CURLE_OK)
 			fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+	}
 	
 
 		usleep(microSeconds);
 	}
 
 	//curl cleanup
-	curl_easy_cleanup(curl);
-	curl_global_cleanup();	
+	if (send) {
+		curl_easy_cleanup(curl);
+		curl_global_cleanup();
+	}	
 	return 0;	
 }
 
