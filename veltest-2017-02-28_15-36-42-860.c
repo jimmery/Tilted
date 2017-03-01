@@ -6,7 +6,6 @@
 #include <curl/curl.h>
 
 #define degToRad 3.14159265359/180.f //would be faster as a constant
-#define microSeconds  40000 //0.1s or 10Hz
 
 struct Angle
 {
@@ -23,67 +22,49 @@ typedef struct Quaternion
 	float z;
 } Quat;
 
+Quat q;
+Quat q_inv;
+
+#define microSeconds  40000 //0.1s or 10Hz
+
 const double time_interval = (double)microSeconds/1000000;
 
-float x_acc_old = 0;
-float y_acc_old = 0;
-float z_acc_old = 0;
+	float x_acc_old = 0;
+	float y_acc_old = 0;
+	float z_acc_old = 0;
 
-float x_acc = 0;
-float y_acc = 0;
-float z_acc = 0;
+	float x_acc = 0;
+	float y_acc = 0;
+	float z_acc = 0;
 
-float x_pos = 0;
-float y_pos = 0;
-float z_pos = 0;
+	float x_pos = 0;
+	float y_pos = 0;
+	float z_pos = 0;
+	
+	int countx = 0;
+	int county = 0;
+	int countz = 0;
+	
+	int x_motion = 1;
+	int y_motion = 1;
+	int z_motion = 1;
 
-int countx = 0;
-int county = 0;
-int countz = 0;
+	int motion = 1;
 
-int x_motion = 1;
-int y_motion = 1;
-int z_motion = 1;
+	int x_counterP = 0;
+	int y_counterP = 0;
+	int z_counterP = 0;
+	int x_counterN = 0;
+	int y_counterN = 0;
+	int z_counterN = 0;
 
-int motion = 1;
-
-int x_counterP = 0;
-int y_counterP = 0;
-int z_counterP = 0;
-int x_counterN = 0;
-int y_counterN = 0;
-int z_counterN = 0;
-
-float x_avg = 0;
-float y_avg = 0;
-float z_avg = 0;
-
-void quatinv(const Quat* const quat, Quat* quat_inv)
-{
-	quat_inv.w = quat.w;
-	quat_inv.x = -quat.x;
-	quat_inv.y = -quat.y;
-	quat_inv.z = -quat.z;
-}
-
-void convertToEuler(const Quat* const quat, Angle* omega)
-{
-	//convert the quaternion representation to Euler Angles in radians
-	Omega.x = atan2f(q0*q1 + q2*q3, 0.5f - q1*q1 - q2*q2);
-	Omega.y = asinf(-2.0f * (q1*q3 - q0*q2));
-	Omega.z = atan2f(q1*q2 + q0*q3, 0.5f - q2*q2 - q3*q3); 
-
-	//convert Angles from  radians to degrees
-	Omega.x *= 180 / 3.14159265359;
-	Omega.y *= 180 / 3.14159265359;
-	Omega.z *= 180 / 3.14159265359;
-}
-
-
+	float x_avg = 0;
+	float y_avg = 0;
+	float z_avg = 0;
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	//if ( argc > 1 )
+	//if ( argc > 0 )
 	//	send = 1;
 	//curl for firebase
 	//
@@ -114,11 +95,6 @@ int main(int argc, char **argv) {
 	Omega.z = 0;
 
 	// initialize q and q_inv. 
-	Quat q; 
-	q.w = q0;
-	q.x = q1;
-	q.y = q2;
-	q.z = q3;
 
 	//initialize sensors, set scale, and calculate resolution.
 	accel = accel_init();
@@ -159,8 +135,17 @@ int main(int argc, char **argv) {
 		//you will need to change the variable sampleFreq to the frequency that you are reading data in at
 		//this is currently set to 10Hz
 		MadgwickAHRSupdateIMU(current_data.x,current_data.y,current_data.z,accel_data.x,accel_data.y,accel_data.z);
+
+		//convert the quaternion representation to Euler Angles in radians
+		Omega.x = atan2f(q0*q1 + q2*q3, 0.5f - q1*q1 - q2*q2);
+		Omega.y = asinf(-2.0f * (q1*q3 - q0*q2));
+		Omega.z = atan2f(q1*q2 + q0*q3, 0.5f - q2*q2 - q3*q3); 
+
+		//convert Angles from  radians to degrees
+		Omega.x *= 180 / 3.14159265359;
+		Omega.y *= 180 / 3.14159265359;
+		Omega.z *= 180 / 3.14159265359;
 		
-		convertToEuler(q, &Omega);
 
 		//gravity compensate
 		float grav[] = {0.0, 0.0, 0.0};
@@ -209,7 +194,7 @@ int main(int argc, char **argv) {
 	}
 
 	if(z_acc_old == 0)
-    	countz += 1;
+                countz += 1;
 	else
 		countz = 0;
 
