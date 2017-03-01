@@ -23,6 +23,13 @@ typedef struct Quaternion
 	float z;
 } Quat;
 
+struct accel
+{
+	float x;
+	float y;
+	float z;
+} acc, acc_av;
+
 const double time_interval = (double)microSeconds/1000000;
 
 float x_acc_old = 0;
@@ -58,20 +65,28 @@ float x_avg = 0;
 float y_avg = 0;
 float z_avg = 0;
 
-void quatinv(const Quat* const quat, Quat* quat_inv)
+void fillQuat(Quat* quat)
 {
-	quat_inv.w = quat.w;
-	quat_inv.x = -quat.x;
-	quat_inv.y = -quat.y;
-	quat_inv.z = -quat.z;
+	quat->w = q0;
+	quat->x = q1;
+	quat->y = q2;
+	quat->z = q3;
 }
 
-void convertToEuler(const Quat* const quat, Angle* omega)
+void quatinv(const Quat* const quat, Quat* quat_inv)
+{
+	quat_inv->w = quat->w;
+	quat_inv->x = -quat->x;
+	quat_inv->y = -quat->y;
+	quat_inv->z = -quat->z;
+}
+
+void convertToEuler(const Quat* const q, struct Angle* omega)
 {
 	//convert the quaternion representation to Euler Angles in radians
-	Omega.x = atan2f(q0*q1 + q2*q3, 0.5f - q1*q1 - q2*q2);
-	Omega.y = asinf(-2.0f * (q1*q3 - q0*q2));
-	Omega.z = atan2f(q1*q2 + q0*q3, 0.5f - q2*q2 - q3*q3); 
+	Omega.x = atan2f(q->w*q->x + q->y*q->z, 0.5f - q->x*q->x - q->y*q->y);
+	Omega.y = asinf(-2.0f * (q->x*q->z - q->w*q->y));
+	Omega.z = atan2f(q->x*q->y + q->w*q->z, 0.5f - q->y*q->y - q->z*q->z); 
 
 	//convert Angles from  radians to degrees
 	Omega.x *= 180 / 3.14159265359;
@@ -79,7 +94,25 @@ void convertToEuler(const Quat* const quat, Angle* omega)
 	Omega.z *= 180 / 3.14159265359;
 }
 
+void quatrotate(const Quat* const q, struct accel* a) {
+	float q01 = q->w * q->x;
+	float q02 = q->w * q->y;
+	float q03 = q->w * q->z;
+	float q11 = q->x * q->x;
+	float q12 = q->x * q->y;
+	float q13 = q->x * q->z;
+	float q22 = q->y * q->y;
+	float q23 = q->y * q->z;
+	float q33 = q->z * q->z;
 
+	float a_new_x = a->x * (1 - 2*q22 - 2*q33) + a->y * (2*(q12 + q03)) + a->z * 2*(q13 - q02);
+	float a_new_y = a->x * 2*(q12 - q03) + a->y * (1 - 2*q11 - 2*q33) + a->z * 2*(q23 + q01);
+	float a_new_z = a->x * 2*(q13 + q02) + a->y * 2*(q23 - q01) + a->z * (1 - 2*q11 - 2*q22);
+
+	a->x = a_new_x;
+	a->y = a_new_y;
+	a->z = a_new_z;
+}
 
 int main(int argc, char **argv) {
 	int send = 0; 
@@ -120,6 +153,11 @@ int main(int argc, char **argv) {
 	q.y = q2;
 	q.z = q3;
 
+	// initialize acc_av. 
+	acc_av.x = 0;
+	acc_av.y = 0;
+	acc_av.z = 0;
+
 	//initialize sensors, set scale, and calculate resolution.
 	accel = accel_init();
 	set_accel_scale(accel, a_scale);	
@@ -159,22 +197,46 @@ int main(int argc, char **argv) {
 		//you will need to change the variable sampleFreq to the frequency that you are reading data in at
 		//this is currently set to 10Hz
 		MadgwickAHRSupdateIMU(current_data.x,current_data.y,current_data.z,accel_data.x,accel_data.y,accel_data.z);
-		
-		convertToEuler(q, &Omega);
 
-		//gravity compensate
-		float grav[] = {0.0, 0.0, 0.0};
-		grav[0] = 2 * (q1 * q3 - q0 * q2);
-		grav[1] = 2 * (q0 * q1 + q2 * q3);
-		grav[2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+		fillQuat(&q);
+		convertToEuler(&q, &Omega);
 
-		float newaccX = (accel_data.x - grav[0])*9.8;
-		float newaccY = (accel_data.y - grav[1])*9.8;
-		float newaccZ = (accel_data.z - grav[2])*9.8;	
+		// gravity compensate
+		// float grav[] = {0.0, 0.0, 0.0};
+		// grav[0] = 2 * (q1 * q3 - q0 * q2);
+		// grav[1] = 2 * (q0 * q1 + q2 * q3);
+		// grav[2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
+
+		// float newaccX = (accel_data.x - grav[0])*9.8;
+		// float newaccY = (accel_data.y - grav[1])*9.8;
+		// float newaccZ = (accel_data.z - grav[2])*9.8;	
 		
-		x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
-		y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
-		z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
+			
+
+	//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
+	//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
+	//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
+		
+		Quat q_inv;
+		quatinv(&q, &q_inv);
+
+		acc.x = accel_data.x;
+		acc.y = accel_data.y;
+		acc.z = accel_data.z;
+		quatrotate(&q_inv, &acc);
+
+		// gravity subtraction. 
+		acc.z = acc.z - 1;
+
+		// filtered acceleration. 
+		acc_av.x = 0.5 * acc_av.x + (0.5 * acc.x)*9.8;
+		acc_av.y = 0.5 * acc_av.y + (0.5 * acc.y)*9.8;
+		acc_av.z = 0.5 * acc_av.z + (0.5 * acc.z)*9.8;
+
+		//define new variable just to see it work
+		x_acc_old = acc_av.x;
+		y_acc_old = acc_av.y;
+		z_acc_old = acc_av.z;
 
 		//double integration for position
 		if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
