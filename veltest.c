@@ -213,9 +213,9 @@ int main(int argc, char **argv) {
 		
 			
 
-	//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
-	//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
-	//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
+		//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
+		//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
+		//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
 		
 		Quat q_inv;
 		quatinv(&q, &q_inv);
@@ -246,77 +246,79 @@ int main(int argc, char **argv) {
 		if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
 			z_acc_old = 0;
 		
-	//movement_end_check
-	
-	x_motion = 1;
-	y_motion = 1;
-	z_motion = 1;
-
-	if(x_acc_old == 0)
-		countx += 1;
-	else
-		countx = 0;
-
-	if(countx >= 20) {
-		x_motion = 0;
-	}
-
-	if(y_acc_old == 0)
-		county += 1;
-	else
-                county = 0;
-
-	if(county >= 20) {
-		y_motion = 0;
-	}
-
-	if(z_acc_old == 0)
-    	countz += 1;
-	else
-		countz = 0;
-
-	if(countz >= 20) {
-		z_motion = 0;
-	}
-
-	if(countx == 0 && county == 0 && countz == 0)
-		motion = 0;
-	else
-		motion = 1;
-
-	
-	//check motion and count accelerations over 1.2 m/s^2
-	if((x_acc_old > 1.2 || x_acc_old < -1.2) && x_motion == 1) {
-		x_counterP++;
-		x_avg += x_acc_old; // (x_counterP * x_counterP * 2);
-		//x_pos += x_avg / 70;
-	}
-	else {
-	//	x_avg = 0;
-		x_counterP = 0;
-	}
-	if((y_acc_old > 1.2 || y_acc_old < -1.2) && y_motion == 1) {
-		y_counterP++;
-		y_avg += y_acc_old; // (y_counterP * y_counterP * 2);
+		//movement_end_check
 		
-		//if(y_avg 
-		//y_pos += y_avg / 70;
-	}	
-	else {
-	//	y_avg = 0;
-		y_counterP = 0;
-	}
-	if((z_acc_old > 1.2 || z_acc_old < -1.2) && z_motion == 1) {
-		z_counterP++;
-		z_avg += z_acc_old; // (z_counterP * z_counterP * 2);
-		z_pos += z_avg;
-	}
-	else {
-	//	z_avg = 0;
-		if (z_avg < 10 && z_avg > -10)
-			z_avg = 0;
-		z_counterP = 0;
-	}
+		x_motion = 1;
+		y_motion = 1;
+		z_motion = 1;
+
+		if(x_acc_old == 0)
+			countx += 1;
+		else
+			countx = 0;
+
+		if(countx >= 20) {
+			x_motion = 0;
+		}
+
+		if(y_acc_old == 0)
+			county += 1;
+		else
+					county = 0;
+
+		if(county >= 20) {
+			y_motion = 0;
+		}
+
+		if(z_acc_old == 0)
+			countz += 1;
+		else
+			countz = 0;
+
+		if(countz >= 20) {
+			z_motion = 0;
+		}
+
+		if(countx == 0 && county == 0 && countz == 0)
+			motion = 0;
+		else
+			motion = 1;
+
+		
+		//check motion and count accelerations over 1.2 m/s^2
+		if((x_acc_old > 1.2 || x_acc_old < -1.2) && x_motion == 1) {
+			x_counterP++;
+			x_avg += x_acc_old; // (x_counterP * x_counterP * 2);
+			x_pos += x_avg / 140;
+		}
+		else {
+		//	x_avg = 0;
+			if (x_avg < 10 && x_avg > -10)
+				x_avg = 0;
+			x_counterP = 0;
+		}
+		if((y_acc_old > 1.2 || y_acc_old < -1.2) && y_motion == 1) {
+			y_counterP++;
+			y_avg += y_acc_old; // (y_counterP * y_counterP * 2); 
+			y_pos += y_avg / 140;
+		}	
+		else {
+		//	y_avg = 0;
+			if (y_avg < 10 && y_avg > -10)
+				y_avg = 0;
+			y_counterP = 0;
+		}
+		if((z_acc_old > 1.2 || z_acc_old < -1.2) && z_motion == 1) {
+			z_counterP++;
+			z_avg += z_acc_old; // (z_counterP * z_counterP * 2);
+			z_pos += z_avg / 140;
+		}
+		else {
+		//	z_avg = 0;
+			if (z_avg < 10 && z_avg > -10)
+				z_avg = 0;
+			z_counterP = 0;
+		}
 		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 		printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
 		//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
@@ -324,21 +326,21 @@ int main(int argc, char **argv) {
 		printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-		printf("x_pos: %f\t y_pos: %f\t z_pos: %f\n\n", x_avg, y_avg, z_pos);
+		printf("x_pos: %f\t y_pos: %f\t z_pos: %f\n\n", x_pos, y_pos, z_pos);
 
-	if ( send ) {
-		//curl send message
-		char msg[100] = "";
-		sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
-		printf("%s\n", msg);
-		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
+		if ( send ) {
+			//curl send message
+			char msg[100] = "";
+			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
+			printf("%s\n", msg);
+			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
 
-		//perform request, res gets return code
-		res = curl_easy_perform(curl);
-		//check for errors
-		if(res != CURLE_OK)
-			fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-	}
+			//perform request, res gets return code
+			res = curl_easy_perform(curl);
+			//check for errors
+			if(res != CURLE_OK)
+				fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+		}
 	
 
 		usleep(microSeconds);
