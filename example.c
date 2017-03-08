@@ -2,7 +2,7 @@
 #include <mraa/i2c.h>
 #include "LSM9DS0.h"
 
-#define SAMPLE_TIME 50000
+#define SAMPLE_TIME 5000
 #define MILLION 1000000
 
 int main() {
@@ -34,6 +34,10 @@ int main() {
 	y_ang = 0;
 	z_ang = 0;
 
+	float axf = 0;
+	float ayf = 0;
+	float azf = 0;
+
 	//Read the sensor data and print them.
 	while(1) {
 		accel_data = read_accel(accel, a_res);
@@ -43,7 +47,11 @@ int main() {
 		y_ang += (gyro_data.y - gyro_offset.y) * SAMPLE_TIME / MILLION;
 		z_ang += (gyro_data.z - gyro_offset.z) * SAMPLE_TIME / MILLION;
 
-  		printf("raw x_accel: %f\t raw y_accel: %f\t raw z_accel: %f\t||", accel_data.x, accel_data.y, accel_data.z);
+		axf = 0.5*axf + 0.5*accel_data.x;
+		ayf = 0.5*ayf + 0.5*accel_data.y;
+		azf = 0.5*azf + 0.5*accel_data.z;
+
+  		printf("%f\t %f\t %f\n", axf, ayf, azf);
   	//	printf("\tX: %f\t Y: %f\t Z: %f\t||", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 	//	printf("\tX: %f\t Y: %f\t Z: %f\n", x_ang, y_ang, z_ang); 
 		usleep(SAMPLE_TIME);

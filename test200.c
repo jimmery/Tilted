@@ -6,7 +6,15 @@
 #include <curl/curl.h>
 
 #define degToRad 3.14159265359/180.f //would be faster as a constant
-#define microSeconds  4000 //0.1s or 10Hz
+#define microSeconds  5000 //200Hz
+
+#define X_THRESH 0.15
+#define Y_THRESH 0.15
+#define Z_THRESH 0.25
+
+#define XBIAS 0 
+#define YBIAS 0
+#define ZBIAS 0 //-0.093214
 
 struct Angle
 {
@@ -116,8 +124,8 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	if ( argc > 0 )
-		send = 1;
+	//if ( argc > 0 )
+	//	send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
@@ -227,6 +235,7 @@ int main(int argc, char **argv) {
 
 		// gravity subtraction. 
 		acc.z = acc.z - 1;
+		
 
 		// filtered acceleration. 
 		acc_av.x = 0.5 * acc_av.x + (0.5 * acc.x)*9.8;
@@ -234,16 +243,16 @@ int main(int argc, char **argv) {
 		acc_av.z = 0.5 * acc_av.z + (0.5 * acc.z)*9.8;
 
 		//define new variable just to see it work
-		x_acc_old = acc_av.x;
-		y_acc_old = acc_av.y;
-		z_acc_old = acc_av.z;
+		x_acc_old = acc_av.x - XBIAS;
+		y_acc_old = acc_av.y - YBIAS;
+		z_acc_old = acc_av.z - ZBIAS;
 
 		//double integration for position
-		if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
+		if(x_acc_old <= X_THRESH && x_acc_old >= -X_THRESH)
 			x_acc_old = 0;
-		if(y_acc_old <= 0.6 && y_acc_old >= -0.6)
+		if(y_acc_old <= Y_THRESH && y_acc_old >= -Y_THRESH)
 			y_acc_old = 0;
-		if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
+		if(z_acc_old <= Z_THRESH && z_acc_old >= -Z_THRESH)
 			z_acc_old = 0;
 		
 		//movement_end_check
@@ -322,11 +331,11 @@ int main(int argc, char **argv) {
 		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 		//printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
 		//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
-		//printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
+		//printf("%f\t %f\t %f\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-	//	printf("x_pos: %f\t y_pos: %f\t z_pos: %f\n\n", x_pos, y_pos, z_pos);
+		printf("%f\t%f\t%f\n", x_pos, y_pos, z_pos);
 
 		if ( send ) {
 			//curl send message

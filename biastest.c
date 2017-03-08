@@ -6,7 +6,9 @@
 #include <curl/curl.h>
 
 #define degToRad 3.14159265359/180.f //would be faster as a constant
-#define microSeconds  4000 //0.1s or 10Hz
+#define microSeconds  5000 //200Hz
+
+#define NOISE_THRESH 0
 
 struct Angle
 {
@@ -116,8 +118,8 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	if ( argc > 0 )
-		send = 1;
+	//if ( argc > 0 )
+	//	send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
@@ -175,9 +177,14 @@ int main(int argc, char **argv) {
 	gyro_offset = calc_gyro_offset(gyro, g_res);
 	
 	printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
+
+	float sumx = 0;
+	float sumy = 0;
+	float sumz = 0;
 	
+	int i = 0;
 	//Read the sensor data and print them.
-	while(1) {
+	while (i < 10000) {
 
 		accel_data = read_accel(accel, a_res);
 		gyro_data = read_gyro(gyro, g_res);
@@ -238,12 +245,16 @@ int main(int argc, char **argv) {
 		y_acc_old = acc_av.y;
 		z_acc_old = acc_av.z;
 
+		sumx += x_acc_old;
+		sumy += y_acc_old;
+		sumz += z_acc_old;
+
 		//double integration for position
-		if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
+		if(x_acc_old <= NOISE_THRESH && x_acc_old >= -NOISE_THRESH)
 			x_acc_old = 0;
-		if(y_acc_old <= 0.6 && y_acc_old >= -0.6)
+		if(y_acc_old <= NOISE_THRESH && y_acc_old >= -NOISE_THRESH)
 			y_acc_old = 0;
-		if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
+		if(z_acc_old <= NOISE_THRESH && z_acc_old >= -NOISE_THRESH)
 			z_acc_old = 0;
 		
 		//movement_end_check
@@ -322,7 +333,7 @@ int main(int argc, char **argv) {
 		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 		//printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
 		//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
-		//printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
+		//printf("%f\t %f\t %f\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
@@ -344,7 +355,10 @@ int main(int argc, char **argv) {
 	
 
 		usleep(microSeconds);
+		i++;
 	}
+
+	printf("%f\t%f\t%f\n", sumx / 10000, sumy / 10000, sumz / 10000);
 
 	//curl cleanup
 	if (send) {
