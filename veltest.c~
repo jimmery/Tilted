@@ -6,7 +6,7 @@
 #include <curl/curl.h>
 
 #define degToRad 3.14159265359/180.f //would be faster as a constant
-#define microSeconds  4000 //0.1s or 10Hz
+#define microSeconds  40000 //0.1s or 10Hz
 
 struct Angle
 {
@@ -174,7 +174,7 @@ int main(int argc, char **argv) {
 	//find offset for the gyro sensor 
 	gyro_offset = calc_gyro_offset(gyro, g_res);
 	
-	printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
+	//printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
 	
 	//Read the sensor data and print them.
 	while(1) {
@@ -264,7 +264,7 @@ int main(int argc, char **argv) {
 		if(y_acc_old == 0)
 			county += 1;
 		else
-					county = 0;
+			county = 0;
 
 		if(county >= 20) {
 			y_motion = 0;
@@ -286,39 +286,59 @@ int main(int argc, char **argv) {
 
 		
 		//check motion and count accelerations over 1.2 m/s^2
-		if((x_acc_old > 1.2 || x_acc_old < -1.2) && x_motion == 1) {
-			x_counterP++;
-			x_avg += x_acc_old; // (x_counterP * x_counterP * 2);
-			x_pos += x_avg / 140;
+		if(x_acc_old <= 1.5 && x_acc_old >= -1.5) {
+			x_acc_old = 0;
 		}
-		else {
+		else
+			x_counterP++;
+		if(x_motion == 0) {
+			x_avg = 0;
+			x_counterP = 0;
+		}
+		if(x_counterP != 0) {
+			x_avg += x_acc_old / x_counterP / 2;//1
+			x_pos += x_avg / 30; //180
+		}
+	/*	else {
 		//	x_avg = 0;
 			if (x_avg < 10 && x_avg > -10)
 				x_avg = 0;
 			x_counterP = 0;
+		}*/
+		if(y_acc_old <= 1.5 && y_acc_old >= -1.5) {
+			y_acc_old = 0;
 		}
-		if((y_acc_old > 1.2 || y_acc_old < -1.2) && y_motion == 1) {
+		else
 			y_counterP++;
-			y_avg += y_acc_old; // (y_counterP * y_counterP * 2); 
-			y_pos += y_avg / 140;
-		}	
-		else {
+		if(y_motion == 0) {
+			y_avg = 0;
+			y_counterP = 0;
+		}
+		if(y_counterP != 0) {
+			y_avg += y_acc_old / y_counterP / 1;
+			y_pos += y_avg / 80;
+		}
+			
+	/*	else {
 		//	y_avg = 0;
 			if (y_avg < 10 && y_avg > -10)
 				y_avg = 0;
 			y_counterP = 0;
-		}
-		if((z_acc_old > 1.2 || z_acc_old < -1.2) && z_motion == 1) {
-			z_counterP++;
-			z_avg += z_acc_old; // (z_counterP * z_counterP * 2);
-			z_pos += z_avg / 140;
-		}
-		else {
+		}*/
+	
+		if(z_acc_old <= 1.5 && z_acc_old >= -1.5)
+			z_acc_old = 0;
+		if(z_motion == 0)
+			z_avg = 0;
+		z_avg += z_acc_old / 20;
+		z_pos += z_avg / 30;//280
+		
+		/*	else {
 		//	z_avg = 0;
 			if (z_avg < 10 && z_avg > -10)
 				z_avg = 0;
 			z_counterP = 0;
-		}
+		}*/
 		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 		//printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
 		//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
@@ -326,7 +346,7 @@ int main(int argc, char **argv) {
 		//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-	//	printf("x_pos: %f\t y_pos: %f\t z_pos: %f\n\n", x_pos, y_pos, z_pos);
+		printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
 
 		if ( send ) {
 			//curl send message
