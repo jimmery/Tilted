@@ -6,23 +6,12 @@
 #include <curl/curl.h>
 #include <unistd.h>
 #include <mraa/gpio.h>
+#include "vector.h"
 
 #define degToRad 3.14159265359/180.f //would be faster as a constant
 #define microSeconds  40000 //0.1s or 10Hz
 
 static volatile int run_flag = 1;
-
-void ptest_top()
-{
-	printf("top button\n");
-	run_flag = 0;
-}
-
-void ptest_bot()
-{
-	printf("bottom button\n");
-	run_flag = 0;
-}
 
 struct Angle
 {
@@ -80,6 +69,48 @@ int z_counterN = 0;
 float x_avg = 0;
 float y_avg = 0;
 float z_avg = 0;
+
+int top_pressed = 0;
+
+mraa_gpio_context top, bot;
+
+void rising_top()
+{
+	usleep(20);
+	if ( !mraa_gpio_read(top) ) {
+		top_pressed = 1;
+	}
+	else
+	{
+		top_pressed = 0;
+	}
+	run_flag = 0;
+}
+
+void falling_top()
+{
+	usleep(40);
+	if ( mraa_gpio_read(top) )
+		return;
+	printf("top release\n");
+}
+
+void rising_bot()
+{
+	usleep(40);
+	if ( !mraa_gpio_read(bot) )
+		return;
+	printf("bottom press\n");
+	run_flag = 0;
+}
+
+void falling_bot()
+{
+	usleep(40);
+	if (mraa_gpio_read(top) )
+		return;
+	printf("bottom release\n");
+}
 
 void fillQuat(Quat* quat)
 {
@@ -159,15 +190,20 @@ int main(int argc, char **argv) {
 	gyro_scale_t g_scale = G_SCALE_2000DPS;
 	mag_scale_t m_scale = M_SCALE_2GS;
 
-	mraa_gpio_context top, bot;
 	top = mraa_gpio_init(31);
 	bot = mraa_gpio_init(45);
 
 	mraa_gpio_dir(top, MRAA_GPIO_IN);
 	mraa_gpio_dir(bot, MRAA_GPIO_IN);
 
-	mraa_gpio_isr(top, MRAA_GPIO_EDGE_RISING, &ptest_top, NULL);
-	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &ptest_bot, NULL);
+<<<<<<< HEAD
+	mraa_gpio_isr(top, MRAA_GPIO_EDGE_RISING, &rising_top, NULL);
+=======
+	mraa_gpio_isr(top, MRAA_GPIO_EDGE_BOTH, &rising_top, NULL);
+>>>>>>> 752e61ea1630de873129a7fb44ad506a82055d4c
+	//mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &rising_bot, NULL);
+	mraa_gpio_isr(top, MRAA_GPIO_EDGE_FALLING, &falling_top, NULL);
+	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_FALLING, &falling_bot, NULL);
 
 	//initialize Omega to zero and prev_data
 	Omega.x = 0;
@@ -185,6 +221,9 @@ int main(int argc, char **argv) {
 	acc_av.x = 0;
 	acc_av.y = 0;
 	acc_av.z = 0;
+
+	vector v;
+	VECTOR_INIT(v);
 
 	//initialize sensors, set scale, and calculate resolution.
 	accel = accel_init();
@@ -206,190 +245,196 @@ int main(int argc, char **argv) {
 	
 	//Read the sensor data and print them.
 	while(1) {
-		accel_data = read_accel(accel, a_res);
-		gyro_data = read_gyro(gyro, g_res);
+		if ( top_pressed ) {
+			accel_data = read_accel(accel, a_res);
+			gyro_data = read_gyro(gyro, g_res);
 
-		//calculates the angular rate of change in degrees per second
-		current_data.x = gyro_data.x-gyro_offset.x;
-		current_data.y = gyro_data.y-gyro_offset.y;
-		current_data.z = gyro_data.z-gyro_offset.z;
-		
-		//convert angular rate of change to radians per second
-		current_data.x *= degToRad;
-		current_data.y *= degToRad;
-		current_data.z *= degToRad;
-
-		//perform the Madgwick Algorithm
-		//with the Madgwick algorithm, in MadgwickAHRS.c
-		//you will need to change the variable sampleFreq to the frequency that you are reading data in at
-		//this is currently set to 10Hz
-		MadgwickAHRSupdateIMU(current_data.x,current_data.y,current_data.z,accel_data.x,accel_data.y,accel_data.z);
-
-		fillQuat(&q);
-		convertToEuler(&q, &Omega);
-
-		// gravity compensate
-		// float grav[] = {0.0, 0.0, 0.0};
-		// grav[0] = 2 * (q1 * q3 - q0 * q2);
-		// grav[1] = 2 * (q0 * q1 + q2 * q3);
-		// grav[2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
-
-		// float newaccX = (accel_data.x - grav[0])*9.8;
-		// float newaccY = (accel_data.y - grav[1])*9.8;
-		// float newaccZ = (accel_data.z - grav[2])*9.8;	
-		
+			//calculates the angular rate of change in degrees per second
+			current_data.x = gyro_data.x-gyro_offset.x;
+			current_data.y = gyro_data.y-gyro_offset.y;
+			current_data.z = gyro_data.z-gyro_offset.z;
 			
+			//convert angular rate of change to radians per second
+			current_data.x *= degToRad;
+			current_data.y *= degToRad;
+			current_data.z *= degToRad;
 
-		//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
-		//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
-		//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
-		
-		Quat q_inv;
-		quatinv(&q, &q_inv);
+			//perform the Madgwick Algorithm
+			//with the Madgwick algorithm, in MadgwickAHRS.c
+			//you will need to change the variable sampleFreq to the frequency that you are reading data in at
+			//this is currently set to 10Hz
+			MadgwickAHRSupdateIMU(current_data.x,current_data.y,current_data.z,accel_data.x,accel_data.y,accel_data.z);
 
-		acc.x = accel_data.x;
-		acc.y = accel_data.y;
-		acc.z = accel_data.z;
-		quatrotate(&q_inv, &acc);
+			fillQuat(&q);
+			convertToEuler(&q, &Omega);
 
-		// gravity subtraction. 
-		acc.z = acc.z - 1;
+			// gravity compensate
+			// float grav[] = {0.0, 0.0, 0.0};
+			// grav[0] = 2 * (q1 * q3 - q0 * q2);
+			// grav[1] = 2 * (q0 * q1 + q2 * q3);
+			// grav[2] = q0 * q0 - q1 * q1 - q2 * q2 + q3 * q3;
 
-		// filtered acceleration. 
-		acc_av.x = 0.5 * acc_av.x + (0.5 * acc.x)*9.8;
-		acc_av.y = 0.5 * acc_av.y + (0.5 * acc.y)*9.8;
-		acc_av.z = 0.5 * acc_av.z + (0.5 * acc.z)*9.8;
+			// float newaccX = (accel_data.x - grav[0])*9.8;
+			// float newaccY = (accel_data.y - grav[1])*9.8;
+			// float newaccZ = (accel_data.z - grav[2])*9.8;	
+			
+				
 
-		//define new variable just to see it work
-		x_acc_old = acc_av.x;
-		y_acc_old = acc_av.y;
-		z_acc_old = acc_av.z;
+			//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
+			//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
+			//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
+			
+			Quat q_inv;
+			quatinv(&q, &q_inv);
 
-		//double integration for position
-		if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
-			x_acc_old = 0;
-		if(y_acc_old <= 0.6 && y_acc_old >= -0.6)
-			y_acc_old = 0;
-		if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
-			z_acc_old = 0;
-		
-		//movement_end_check
-		
-		x_motion = 1;
-		y_motion = 1;
-		z_motion = 1;
+			acc.x = accel_data.x;
+			acc.y = accel_data.y;
+			acc.z = accel_data.z;
+			quatrotate(&q_inv, &acc);
 
-		if(x_acc_old == 0)
-			countx += 1;
-		else
-			countx = 0;
+			// gravity subtraction. 
+			acc.z = acc.z - 1;
 
-		if(countx >= 10) {
-			x_motion = 0;
-		}
+			// filtered acceleration. 
+			acc_av.x = 0.5 * acc_av.x + (0.5 * acc.x)*9.8;
+			acc_av.y = 0.5 * acc_av.y + (0.5 * acc.y)*9.8;
+			acc_av.z = 0.5 * acc_av.z + (0.5 * acc.z)*9.8;
 
-		if(y_acc_old == 0)
-			county += 1;
-		else
-			county = 0;
+			//define new variable just to see it work
+			x_acc_old = acc_av.x;
+			y_acc_old = acc_av.y;
+			z_acc_old = acc_av.z;
 
-		if(county >= 10) {
-			y_motion = 0;
-		}
+			//double integration for position
+			if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
+				x_acc_old = 0;
+			if(y_acc_old <= 0.6 && y_acc_old >= -0.6)
+				y_acc_old = 0;
+			if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
+				z_acc_old = 0;
+			
+			//movement_end_check
+			
+			x_motion = 1;
+			y_motion = 1;
+			z_motion = 1;
 
-		if(z_acc_old == 0)
-			countz += 1;
-		else
-			countz = 0;
+			if(x_acc_old == 0)
+				countx += 1;
+			else
+				countx = 0;
 
-		if(countz >= 10) {
-			z_motion = 0;
-		}
+			if(countx >= 10) {
+				x_motion = 0;
+			}
 
-		if(countx == 0 && county == 0 && countz == 0)
-			motion = 0;
-		else
-			motion = 1;
+			if(y_acc_old == 0)
+				county += 1;
+			else
+				county = 0;
 
-		
-		//check motion and count accelerations over 1.2 m/s^2
-		if(x_acc_old <= 1.5 && x_acc_old >= -1.5) {
-			x_acc_old = 0;
-		}
-		else
-			x_counterP++;
-		if(x_motion == 0) {
-			x_avg = 0;
-			x_counterP = 0;
-		}
-		if(x_counterP != 0) {
-			x_avg += x_acc_old / x_counterP / x_counterP;//1
-			x_pos += x_avg / 80; //180
-		}
-	/*	else {
-		//	x_avg = 0;
-			if (x_avg < 10 && x_avg > -10)
+			if(county >= 10) {
+				y_motion = 0;
+			}
+
+			if(z_acc_old == 0)
+				countz += 1;
+			else
+				countz = 0;
+
+			if(countz >= 10) {
+				z_motion = 0;
+			}
+
+			if(countx == 0 && county == 0 && countz == 0)
+				motion = 0;
+			else
+				motion = 1;
+
+			
+			//check motion and count accelerations over 1.2 m/s^2
+			if(x_acc_old <= 1.5 && x_acc_old >= -1.5) {
+				x_acc_old = 0;
+			}
+			else
+				x_counterP++;
+			if(x_motion == 0) {
 				x_avg = 0;
-			x_counterP = 0;
-		}*/
-		if(y_acc_old <= 1.5 && y_acc_old >= -1.5) {
-			y_acc_old = 0;
-		}
-		else
-			y_counterP++;
-		if(y_motion == 0) {
-			y_avg = 0;
-			y_counterP = 0;
-		}
-		if(y_counterP != 0) {
-			y_avg += y_acc_old / y_counterP / y_counterP;
-			y_pos += y_avg / 160;
-		}
-			
-	/*	else {
-		//	y_avg = 0;
-			if (y_avg < 10 && y_avg > -10)
-				y_avg = 0;
-			y_counterP = 0;
-		}*/
-	
-		if(z_acc_old <= 1.5 && z_acc_old >= -1.5)
-			z_acc_old = 0;
-		if(z_motion == 0)
-			z_avg = 0;
-		z_avg += z_acc_old / 20;
-		z_pos += z_avg / 30;//280
-		
+				x_counterP = 0;
+			}
+			if(x_counterP != 0) {
+				x_avg += x_acc_old / x_counterP / x_counterP;//1
+				x_pos += x_avg / 80; //180
+			}
 		/*	else {
-		//	z_avg = 0;
-			if (z_avg < 10 && z_avg > -10)
+			//	x_avg = 0;
+				if (x_avg < 10 && x_avg > -10)
+					x_avg = 0;
+				x_counterP = 0;
+			}*/
+			if(y_acc_old <= 1.5 && y_acc_old >= -1.5) {
+				y_acc_old = 0;
+			}
+			else
+				y_counterP++;
+			if(y_motion == 0) {
+				y_avg = 0;
+				y_counterP = 0;
+			}
+			if(y_counterP != 0) {
+				y_avg += y_acc_old / y_counterP / y_counterP;
+				y_pos += y_avg / 160;
+			}
+				
+		/*	else {
+			//	y_avg = 0;
+				if (y_avg < 10 && y_avg > -10)
+					y_avg = 0;
+				y_counterP = 0;
+			}*/
+		
+			if(z_acc_old <= 1.5 && z_acc_old >= -1.5)
+				z_acc_old = 0;
+			if(z_motion == 0)
 				z_avg = 0;
-			z_counterP = 0;
-		}*/
-		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
-		//printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
-		//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
-		//printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
-		//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
-		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
+			z_avg += z_acc_old / 20;
+			z_pos += z_avg / 30;//280
+			
+			/*	else {
+			//	z_avg = 0;
+				if (z_avg < 10 && z_avg > -10)
+					z_avg = 0;
+				z_counterP = 0;
+			}*/
+			//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
+			//printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
+			//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
+			//printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
+			//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
+			//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-		//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
-
-		if ( send ) {
-			//curl send message
+			//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
 			char msg[100] = "";
 			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
-			//printf("%s\n", msg);
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
-
-			//perform request, res gets return code
-			res = curl_easy_perform(curl);
-			//check for errors
-			if(res != CURLE_OK)
-				fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+			VECTOR_ADD(v, msg);
+			else {
+				if ( send ) {
+					for (int i = 0; i < VECTOR_TOTAL(v); i++)
+					{
+						curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, i));
+						//perform request, res gets return code
+						res = curl_easy_perform(curl);
+						//check for errors
+						if(res != CURLE_OK)
+							fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+					}
+					for (int i = 0; i < VECTOR_TOTAL(v); i++)
+					{
+						VECTOR_DELETE(v, i);
+					}
+				}
+			}
 		}
-	
-
 		usleep(microSeconds);
 	}
 

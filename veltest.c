@@ -89,7 +89,7 @@ void rising_top()
 
 void falling_top()
 {
-	usleep(20);
+	usleep(40);
 	if ( mraa_gpio_read(top) )
 		return;
 	printf("top release\n");
@@ -97,7 +97,7 @@ void falling_top()
 
 void rising_bot()
 {
-	usleep(20);
+	usleep(40);
 	if ( !mraa_gpio_read(bot) )
 		return;
 	printf("bottom press\n");
@@ -106,7 +106,7 @@ void rising_bot()
 
 void falling_bot()
 {
-	usleep(20);
+	usleep(40);
 	if (mraa_gpio_read(top) )
 		return;
 	printf("bottom release\n");
