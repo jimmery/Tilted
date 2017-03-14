@@ -1,0 +1,6 @@
+{
+    "files.associations": {
+        "*.lsp": "lisp",
+        "*.c~": "cpp"
+    }
+}

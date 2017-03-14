@@ -4,13 +4,9 @@
 #include "MadgwickAHRS.h"
 #include <math.h>
 #include <curl/curl.h>
-#include <unistd.h>
-#include <mraa/gpio.h>
 
 #define degToRad 3.14159265359/180.f //would be faster as a constant
 #define microSeconds  40000 //0.1s or 10Hz
-
-static volatile int run_flag = 1;
 
 struct Angle
 {
@@ -69,26 +65,6 @@ float x_avg = 0;
 float y_avg = 0;
 float z_avg = 0;
 
-mraa_gpio_context top, bot;
-
-void ptest_top()
-{
-	usleep(20);
-	if ( !mraa_gpio_read(top) )
-		return;
-	printf("top button\n");
-	run_flag = 0;
-}
-
-void ptest_bot()
-{
-	usleep(20);
-	if ( !mraa_gpio_read(top) )
-		return;
-	printf("bottom button\n");
-	run_flag = 0;
-}
-
 void fillQuat(Quat* quat)
 {
 	quat->w = q0;
@@ -140,14 +116,12 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	//if ( argc > 0 )
-//		send = 1;
+	//if ( argc > 1 )
+	//	send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
 	CURLcode res;
-	
-	printf("start main function");
 
 	if (send) {
 		curl = curl_easy_init();
@@ -166,15 +140,6 @@ int main(int argc, char **argv) {
 	accel_scale_t a_scale = A_SCALE_4G;
 	gyro_scale_t g_scale = G_SCALE_2000DPS;
 	mag_scale_t m_scale = M_SCALE_2GS;
-
-	top = mraa_gpio_init(31);
-	bot = mraa_gpio_init(45);
-
-	mraa_gpio_dir(top, MRAA_GPIO_IN);
-	mraa_gpio_dir(bot, MRAA_GPIO_IN);
-
-	mraa_gpio_isr(top, MRAA_GPIO_EDGE_RISING, &ptest_top, NULL);
-	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &ptest_bot, NULL);
 
 	//initialize Omega to zero and prev_data
 	Omega.x = 0;
@@ -209,10 +174,11 @@ int main(int argc, char **argv) {
 	//find offset for the gyro sensor 
 	gyro_offset = calc_gyro_offset(gyro, g_res);
 	
-	//printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
+	printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
 	
 	//Read the sensor data and print them.
 	while(1) {
+
 		accel_data = read_accel(accel, a_res);
 		gyro_data = read_gyro(gyro, g_res);
 
@@ -247,154 +213,134 @@ int main(int argc, char **argv) {
 		
 			
 
-		//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
-		//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
-		//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
+	//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
+	//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
+	//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
 		
-		Quat q_inv;
-		quatinv(&q, &q_inv);
+	Quat q_inv;
+	quatinv(&q, &q_inv);
 
-		acc.x = accel_data.x;
-		acc.y = accel_data.y;
-		acc.z = accel_data.z;
-		quatrotate(&q_inv, &acc);
+	acc.x = accel_data.x;
+	acc.y = accel_data.y;
+	acc.z = accel_data.z;
+	quatrotate(&q_inv, &acc);
 
-		// gravity subtraction. 
-		acc.z = acc.z - 1;
+	// gravity subtraction. 
+	acc.z = acc.z - 1;
 
-		// filtered acceleration. 
-		acc_av.x = 0.5 * acc_av.x + (0.5 * acc.x)*9.8;
-		acc_av.y = 0.5 * acc_av.y + (0.5 * acc.y)*9.8;
-		acc_av.z = 0.5 * acc_av.z + (0.5 * acc.z)*9.8;
+	// filtered acceleration. 
+	acc_av.x = 0.5 * acc_av.x + (0.5 * acc.x)*9.8;
+	acc_av.y = 0.5 * acc_av.y + (0.5 * acc.y)*9.8;
+	acc_av.z = 0.5 * acc_av.z + (0.5 * acc.z)*9.8;
 
-		//define new variable just to see it work
-		x_acc_old = acc_av.x;
-		y_acc_old = acc_av.y;
-		z_acc_old = acc_av.z;
+	//define new variable just to see it work
+	x_acc_old = acc_av.x;
+	y_acc_old = acc_av.y;
+	z_acc_old = acc_av.z;
 
-		//double integration for position
-		if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
-			x_acc_old = 0;
-		if(y_acc_old <= 0.6 && y_acc_old >= -0.6)
-			y_acc_old = 0;
-		if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
-			z_acc_old = 0;
+	//double integration for position
+	if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
+		x_acc_old = 0;
+	if(y_acc_old <= 0.6 && y_acc_old >= -0.6)
+		y_acc_old = 0;
+	if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
+		z_acc_old = 0;
 		
-		//movement_end_check
-		
-		x_motion = 1;
-		y_motion = 1;
-		z_motion = 1;
-
-		if(x_acc_old == 0)
-			countx += 1;
-		else
-			countx = 0;
-
-		if(countx >= 10) {
-			x_motion = 0;
-		}
-
-		if(y_acc_old == 0)
-			county += 1;
-		else
-			county = 0;
-
-		if(county >= 10) {
-			y_motion = 0;
-		}
-
-		if(z_acc_old == 0)
-			countz += 1;
-		else
-			countz = 0;
-
-		if(countz >= 10) {
-			z_motion = 0;
-		}
-
-		if(countx == 0 && county == 0 && countz == 0)
-			motion = 0;
-		else
-			motion = 1;
-
-		
-		//check motion and count accelerations over 1.2 m/s^2
-		if(x_acc_old <= 1.5 && x_acc_old >= -1.5) {
-			x_acc_old = 0;
-		}
-		else
-			x_counterP++;
-		if(x_motion == 0) {
-			x_avg = 0;
-			x_counterP = 0;
-		}
-		if(x_counterP != 0) {
-			x_avg += x_acc_old / x_counterP / x_counterP;//1
-			x_pos += x_avg / 80; //180
-		}
-	/*	else {
-		//	x_avg = 0;
-			if (x_avg < 10 && x_avg > -10)
-				x_avg = 0;
-			x_counterP = 0;
-		}*/
-		if(y_acc_old <= 1.5 && y_acc_old >= -1.5) {
-			y_acc_old = 0;
-		}
-		else
-			y_counterP++;
-		if(y_motion == 0) {
-			y_avg = 0;
-			y_counterP = 0;
-		}
-		if(y_counterP != 0) {
-			y_avg += y_acc_old / y_counterP / y_counterP;
-			y_pos += y_avg / 160;
-		}
-			
-	/*	else {
-		//	y_avg = 0;
-			if (y_avg < 10 && y_avg > -10)
-				y_avg = 0;
-			y_counterP = 0;
-		}*/
+	//movement_end_check
 	
-		if(z_acc_old <= 1.5 && z_acc_old >= -1.5)
-			z_acc_old = 0;
-		if(z_motion == 0)
+	x_motion = 1;
+	y_motion = 1;
+	z_motion = 1;
+
+	if(x_acc_old == 0)
+		countx += 1;
+	else
+		countx = 0;
+
+	if(countx >= 20) {
+		x_motion = 0;
+	}
+
+	if(y_acc_old == 0)
+		county += 1;
+	else
+                county = 0;
+
+	if(county >= 20) {
+		y_motion = 0;
+	}
+
+	if(z_acc_old == 0)
+    	countz += 1;
+	else
+		countz = 0;
+
+	if(countz >= 20) {
+		z_motion = 0;
+	}
+
+	if(countx == 0 && county == 0 && countz == 0)
+		motion = 0;
+	else
+		motion = 1;
+
+	
+	//check motion and count accelerations over 1.2 m/s^2
+	if((x_acc_old > 1.2 || x_acc_old < -1.2) && x_motion == 1) {
+		x_counterP++;
+		x_avg += x_acc_old; // (x_counterP * x_counterP * 2);
+		x_pos += x_avg / 140;
+	}
+	else {
+	//	x_avg = 0;
+		if (x_avg < 10 && x_avg > -10)
+			x_avg = 0;
+		x_counterP = 0;
+	}
+	if((y_acc_old > 1.2 || y_acc_old < -1.2) && y_motion == 1) {
+		y_counterP++;
+		y_avg += y_acc_old; // (y_counterP * y_counterP * 2); 
+		y_pos += y_avg / 140;
+	}	
+	else {
+	//	y_avg = 0;
+		if (y_avg < 10 && y_avg > -10)
+			y_avg = 0;
+		y_counterP = 0;
+	}
+	if((z_acc_old > 1.2 || z_acc_old < -1.2) && z_motion == 1) {
+		z_counterP++;
+		z_avg += z_acc_old; // (z_counterP * z_counterP * 2);
+		z_pos += z_avg / 140;
+	}
+	else {
+	//	z_avg = 0;
+		if (z_avg < 10 && z_avg > -10)
 			z_avg = 0;
-		z_avg += z_acc_old / 20;
-		z_pos += z_avg / 30;//280
-		
-		/*	else {
-		//	z_avg = 0;
-			if (z_avg < 10 && z_avg > -10)
-				z_avg = 0;
-			z_counterP = 0;
-		}*/
-		//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
-		//printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
-		//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
-		//printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
-		//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
-		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
+		z_counterP = 0;
+	}
+	//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
+	printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
+	//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
+	//printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
+	printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
+	//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-		//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
+	printf("x_pos: %f\t y_pos: %f\t z_pos: %f\n\n", x_pos, y_pos, z_pos);
 
-		if ( send ) {
-			//curl send message
-			char msg[100] = "";
-			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
-			//printf("%s\n", msg);
-			curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
+	if ( send ) {
+		//curl send message
+		char msg[100] = "";
+		sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
+		printf("%s\n", msg);
+		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
 
-			//perform request, res gets return code
-			res = curl_easy_perform(curl);
-			//check for errors
-			if(res != CURLE_OK)
-				fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-		}
+		//perform request, res gets return code
+		res = curl_easy_perform(curl);
+		//check for errors
+		if(res != CURLE_OK)
+			fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+	}
 	
 
 		usleep(microSeconds);
