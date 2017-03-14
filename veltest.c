@@ -4,9 +4,25 @@
 #include "MadgwickAHRS.h"
 #include <math.h>
 #include <curl/curl.h>
+#include <unistd.h>
+#include <mraa/gpio.h>
 
 #define degToRad 3.14159265359/180.f //would be faster as a constant
 #define microSeconds  40000 //0.1s or 10Hz
+
+static volatile int run_flag = 1;
+
+void ptest_top()
+{
+	printf("top button\n");
+	run_flag = 0;
+}
+
+void ptest_bot()
+{
+	printf("bottom button\n");
+	run_flag = 0;
+}
 
 struct Angle
 {
@@ -117,11 +133,13 @@ void quatrotate(const Quat* const q, struct accel* a) {
 int main(int argc, char **argv) {
 	int send = 0; 
 	//if ( argc > 0 )
-	//	send = 1;
+//		send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
 	CURLcode res;
+	
+	printf("start main function");
 
 	if (send) {
 		curl = curl_easy_init();
@@ -140,6 +158,16 @@ int main(int argc, char **argv) {
 	accel_scale_t a_scale = A_SCALE_4G;
 	gyro_scale_t g_scale = G_SCALE_2000DPS;
 	mag_scale_t m_scale = M_SCALE_2GS;
+
+	mraa_gpio_context top, bot;
+	top = mraa_gpio_init(31);
+	bot = mraa_gpio_init(45);
+
+	mraa_gpio_dir(top, MRAA_GPIO_IN);
+	mraa_gpio_dir(bot, MRAA_GPIO_IN);
+
+	mraa_gpio_isr(top, MRAA_GPIO_EDGE_RISING, &ptest_top, NULL);
+	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &ptest_bot, NULL);
 
 	//initialize Omega to zero and prev_data
 	Omega.x = 0;
@@ -178,7 +206,6 @@ int main(int argc, char **argv) {
 	
 	//Read the sensor data and print them.
 	while(1) {
-
 		accel_data = read_accel(accel, a_res);
 		gyro_data = read_gyro(gyro, g_res);
 
@@ -257,7 +284,7 @@ int main(int argc, char **argv) {
 		else
 			countx = 0;
 
-		if(countx >= 20) {
+		if(countx >= 10) {
 			x_motion = 0;
 		}
 
@@ -266,7 +293,7 @@ int main(int argc, char **argv) {
 		else
 			county = 0;
 
-		if(county >= 20) {
+		if(county >= 10) {
 			y_motion = 0;
 		}
 
@@ -275,7 +302,7 @@ int main(int argc, char **argv) {
 		else
 			countz = 0;
 
-		if(countz >= 20) {
+		if(countz >= 10) {
 			z_motion = 0;
 		}
 
@@ -296,8 +323,8 @@ int main(int argc, char **argv) {
 			x_counterP = 0;
 		}
 		if(x_counterP != 0) {
-			x_avg += x_acc_old / x_counterP / 2;//1
-			x_pos += x_avg / 30; //180
+			x_avg += x_acc_old / x_counterP / x_counterP;//1
+			x_pos += x_avg / 80; //180
 		}
 	/*	else {
 		//	x_avg = 0;
@@ -315,8 +342,8 @@ int main(int argc, char **argv) {
 			y_counterP = 0;
 		}
 		if(y_counterP != 0) {
-			y_avg += y_acc_old / y_counterP / 1;
-			y_pos += y_avg / 80;
+			y_avg += y_acc_old / y_counterP / y_counterP;
+			y_pos += y_avg / 160;
 		}
 			
 	/*	else {
@@ -346,7 +373,7 @@ int main(int argc, char **argv) {
 		//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 		//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-		printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
+		//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
 
 		if ( send ) {
 			//curl send message
