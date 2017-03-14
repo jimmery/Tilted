@@ -71,22 +71,38 @@ float z_avg = 0;
 
 mraa_gpio_context top, bot;
 
-void ptest_top()
+void rising_top()
 {
 	usleep(20);
 	if ( !mraa_gpio_read(top) )
 		return;
-	printf("top button\n");
+	printf("top press\n");
 	run_flag = 0;
 }
 
-void ptest_bot()
+void falling_top()
 {
 	usleep(20);
-	if ( !mraa_gpio_read(top) )
+	if ( mraa_gpio_read(top) )
 		return;
-	printf("bottom button\n");
+	print("top release\n");
+}
+
+void rising_bot()
+{
+	usleep(20);
+	if ( !mraa_gpio_read(bot) )
+		return;
+	printf("bottom press\n");
 	run_flag = 0;
+}
+
+void falling_bot()
+{
+	usleep(20);
+	if (mraa_gpio_read(top) )
+		return;
+	printf("bottom release\n");
 }
 
 void fillQuat(Quat* quat)
@@ -173,8 +189,10 @@ int main(int argc, char **argv) {
 	mraa_gpio_dir(top, MRAA_GPIO_IN);
 	mraa_gpio_dir(bot, MRAA_GPIO_IN);
 
-	mraa_gpio_isr(top, MRAA_GPIO_EDGE_RISING, &ptest_top, NULL);
-	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &ptest_bot, NULL);
+	mraa_gpio_isr(top, MRAA_GPIO_EDGE_RISING, &rising_top, NULL);
+	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &rising_bot, NULL);
+	mraa_gpio_isr(top, MRAA_GPIO_EDGE_FALLING, &falling_top, NULL);
+	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_FALLING, &falling_bot, NULL);
 
 	//initialize Omega to zero and prev_data
 	Omega.x = 0;
