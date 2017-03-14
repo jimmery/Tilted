@@ -417,7 +417,7 @@ int main(int argc, char **argv) {
 				if ( send ) {
 					for (int i = 0; i < VECTOR_TOTAL(v); i++)
 					{
-						curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, i));
+						curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, i));
 						//perform request, res gets return code
 						res = curl_easy_perform(curl);
 						//check for errors
