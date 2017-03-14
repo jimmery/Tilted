@@ -74,9 +74,13 @@ mraa_gpio_context top, bot;
 void rising_top()
 {
 	usleep(20);
-	if ( !mraa_gpio_read(top) )
-		return;
-	printf("top press\n");
+	if ( !mraa_gpio_read(top) ) {
+		printf("top release?\n");
+	}
+	else
+	{
+		printf("top press?\n");
+	}
 	run_flag = 0;
 }
 
@@ -189,7 +193,7 @@ int main(int argc, char **argv) {
 	mraa_gpio_dir(top, MRAA_GPIO_IN);
 	mraa_gpio_dir(bot, MRAA_GPIO_IN);
 
-	//mraa_gpio_isr(top, MRAA_GPIO_EDGE_RISING, &rising_top, NULL);
+	mraa_gpio_isr(top, MRAA_GPIO_EDGE_BOTH, &rising_top, NULL);
 	//mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &rising_bot, NULL);
 	mraa_gpio_isr(top, MRAA_GPIO_EDGE_FALLING, &falling_top, NULL);
 	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_FALLING, &falling_bot, NULL);
