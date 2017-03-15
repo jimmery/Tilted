@@ -76,7 +76,7 @@ mraa_gpio_context top, bot;
 
 void rising_top()
 {
-	usleep(20);
+	usleep(40);
 	if ( !mraa_gpio_read(top) ) {
 		top_pressed = 1;
 	}
@@ -218,7 +218,7 @@ int main(int argc, char **argv) {
 	acc_av.y = 0;
 	acc_av.z = 0;
 
-	vector v;
+	//vector v;
 	VECTOR_INIT(v);
 
 	//initialize sensors, set scale, and calculate resolution.
@@ -413,24 +413,25 @@ int main(int argc, char **argv) {
 			char msg[100] = "";
 			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
 			VECTOR_ADD(v, msg);
-			else {
-				if ( send ) {
-					for (int i = 0; i < VECTOR_TOTAL(v); i++)
-					{
-						curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, i));
-						//perform request, res gets return code
-						res = curl_easy_perform(curl);
-						//check for errors
-						if(res != CURLE_OK)
-							fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-					}
-					for (int i = 0; i < VECTOR_TOTAL(v); i++)
-					{
-						VECTOR_DELETE(v, i);
-					}
+		}
+		else {
+			if ( send ) {
+				for (int i = 0; i < VECTOR_TOTAL(v); i++)
+				{
+					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, i));
+					//perform request, res gets return code
+					res = curl_easy_perform(curl);
+					//check for errors
+					if(res != CURLE_OK)
+						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+				}
+				for (int i = 0; i < VECTOR_TOTAL(v); i++)
+				{
+					VECTOR_DELETE(v, i);
 				}
 			}
 		}
+		
 		usleep(microSeconds);
 	}
 
