@@ -439,9 +439,9 @@ int main(int argc, char **argv) {
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 				}
 				printf("sending complete.\n");
-				for (i = 0; i < VECTOR_TOTAL(v); i++)
+				while (VECTOR_TOTAL(v) > 0)
 				{
-					VECTOR_DELETE(v, i);
+					VECTOR_DELETE(v, 0);
 				}
 			}
 		}

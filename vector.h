@@ -1,7 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
-#define VECTOR_INIT_CAPACITY 25
+#define VECTOR_INIT_CAPACITY 1000
 
 #define VECTOR_INIT(vec) vector vec; vector_init(&vec)
 #define VECTOR_ADD(vec, item) vector_add(&vec, (void *) item)
