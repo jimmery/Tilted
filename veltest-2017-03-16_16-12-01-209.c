@@ -417,6 +417,9 @@ int main(int argc, char **argv) {
 			VECTOR_ADD(x_vector, x_pos);
 			VECTOR_ADD(y_vector, y_pos);
 			VECTOR_ADD(z_vector, z_pos);
+
+			printf("%s\n", msg);
+			VECTOR_ADD(v, msg);
 		}
 		else { // button has been released. 
 			x_avg = 0;
@@ -425,12 +428,12 @@ int main(int argc, char **argv) {
 			if ( send ) { 
 				//while (VECTOR_TOTAL(v) > 0)
 				int i = 0; 
-				// for (i = 0; i < VECTOR_TOTAL(v); i++)
-				// {
-				// 	printf("printing out vector. \n");
-				// 	//printf("%s\n", VECTOR_GET(, i));
-				// }
-				for (i = 0; i < VECTOR_TOTAL(x_vector); i++)
+				for (i = 0; i < VECTOR_TOTAL(v); i++)
+				{
+					printf("printing out vector. \n");
+					printf("%s\n", VECTOR_GET(v, i));
+				}
+				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
 					char msg[100] = "";
 					sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", 
@@ -444,11 +447,9 @@ int main(int argc, char **argv) {
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 				}
 				printf("sending complete.\n");
-				while (VECTOR_TOTAL(x_vector) > 0)
+				while (VECTOR_TOTAL(v) > 0)
 				{
-					VECTOR_DELETE(x_vector, 0);
-					VECTOR_DELETE(y_vector, 0);
-					VECTOR_DELETE(z_vector, 0);
+					VECTOR_DELETE(v, 0);
 				}
 			}
 		}
