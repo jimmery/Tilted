@@ -163,8 +163,8 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	//if ( argc > 0 )
-//		send = 1;
+	if ( argc > 0 )
+		send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
@@ -409,12 +409,15 @@ int main(int argc, char **argv) {
 			//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 			//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-			//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
+			printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
 			char msg[100] = "";
 			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
 			VECTOR_ADD(v, msg);
 		}
 		else { // button has been released. 
+			x_avg = 0;
+			y_avg = 0;
+			z_avg = 0;
 			if ( send ) { 
 				while (VECTOR_TOTAL(v) > 0)
 				{
