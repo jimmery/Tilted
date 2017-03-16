@@ -34,9 +34,7 @@ void vector_add(vector *v, char *item)
     if (v->capacity == v->total)
         vector_resize(v, v->capacity * 2);
     v->items[v->total++] = malloc(100*sizeof(char));
-    printf("created new spot.\n");
-    strcpy(v->items[v->total], item);
-    printf("stored new string %s\n", item);
+    strcpy(v->items[v->total++], item);
 }
 
 void vector_set(vector *v, int index, char *item)
@@ -57,7 +55,7 @@ void vector_delete(vector *v, int index)
     if (index < 0 || index >= v->total)
         return;
 
-    free(v->items[index]);
+    v->items[index] = NULL;
 
     int i;
     for (i = 0; i < v->total - 1; i++) {
