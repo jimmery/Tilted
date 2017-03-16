@@ -412,7 +412,7 @@ int main(int argc, char **argv) {
 			//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 			//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-			printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
+			//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
 
 			VECTOR_ADD(x_vector, x_pos);
 			VECTOR_ADD(y_vector, y_pos);
@@ -444,7 +444,7 @@ int main(int argc, char **argv) {
 						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 				}
-				//printf("sending complete.\n");
+				printf("sending complete.\n");
 				while (VECTOR_TOTAL(x_vector) > 0)
 				{
 					VECTOR_DELETE(x_vector, 0);
