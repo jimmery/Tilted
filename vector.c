@@ -62,8 +62,8 @@ void vector_delete(vector *v, int index)
 
     v->total--;
 
-    if (v->total > 0 && v->total == v->capacity / 4)
-        vector_resize(v, v->capacity / 2);
+    // if (v->total > 0 && v->total == v->capacity / 4)
+    //     vector_resize(v, v->capacity / 2);
 }
 
 void vector_free(vector *v)

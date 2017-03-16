@@ -414,21 +414,22 @@ int main(int argc, char **argv) {
 			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
 			VECTOR_ADD(v, msg);
 		}
-		else {
-			if ( send ) {
-				for (int i = 0; i < VECTOR_TOTAL(v); i++)
+		else { // button has been released. 
+			if ( send ) { 
+				while (VECTOR_TOTAL(v) > 0)
 				{
-					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, i));
+					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, 0));
 					//perform request, res gets return code
 					res = curl_easy_perform(curl);
 					//check for errors
 					if(res != CURLE_OK)
 						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+					VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions? 
 				}
-				for (int i = 0; i < VECTOR_TOTAL(v); i++)
-				{
-					VECTOR_DELETE(v, i);
-				}
+				// for (i = 0; i < VECTOR_TOTAL(v); i++)
+				// {
+				// 	VECTOR_DELETE(v, i);
+				// }
 			}
 		}
 		
