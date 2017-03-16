@@ -410,9 +410,10 @@ int main(int argc, char **argv) {
 			//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 			//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-			printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
+			//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
 			char msg[100] = "";
 			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
+			printf("%s\n", msg);
 			VECTOR_ADD(v, msg);
 		}
 		else { // button has been released. 
@@ -436,7 +437,6 @@ int main(int argc, char **argv) {
 					if(res != CURLE_OK)
 						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
-					usleep(25); 
 				}
 				printf("sending complete.\n");
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
