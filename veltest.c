@@ -430,7 +430,8 @@ int main(int argc, char **argv) {
 					//check for errors
 					if(res != CURLE_OK)
 						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions? 
+					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
+					usleep(25); 
 				}
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
