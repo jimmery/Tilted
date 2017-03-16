@@ -426,11 +426,11 @@ int main(int argc, char **argv) {
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
 					printf("printing out vector. \n");
-					printf("%s\n", VECTOR_GET(v, char*, i));
+					printf("%s\n", VECTOR_GET(v, i));
 				}
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
-					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, i));
+					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, i));
 					//perform request, res gets return code
 					res = curl_easy_perform(curl);
 					//check for errors
