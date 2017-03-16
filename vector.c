@@ -34,7 +34,7 @@ void vector_add(vector *v, char *item)
     if (v->capacity == v->total)
         vector_resize(v, v->capacity * 2);
     v->items[v->total++] = malloc(100*sizeof(char));
-    strcpy(v->items[v->total++], item);
+    strcpy(v->items[v->total], item);
 }
 
 void vector_set(vector *v, int index, char *item)
