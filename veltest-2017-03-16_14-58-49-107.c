@@ -410,7 +410,7 @@ int main(int argc, char **argv) {
 			//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 			//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-			printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
+			//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
 			char msg[100] = "";
 			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
 			VECTOR_ADD(v, msg);
@@ -420,22 +420,20 @@ int main(int argc, char **argv) {
 			y_avg = 0;
 			z_avg = 0;
 			if ( send ) { 
-				//while (VECTOR_TOTAL(v) > 0)
-				int i = 0; 
-				for (i = 0; i < VECTOR_TOTAL(v); i++)
+				while (VECTOR_TOTAL(v) > 0)
 				{
-					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, i));
+					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, 0));
 					//perform request, res gets return code
 					res = curl_easy_perform(curl);
 					//check for errors
 					if(res != CURLE_OK)
 						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions? 
+					VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions? 
 				}
-				for (i = 0; i < VECTOR_TOTAL(v); i++)
-				{
-					VECTOR_DELETE(v, i);
-				}
+				// for (i = 0; i < VECTOR_TOTAL(v); i++)
+				// {
+				// 	VECTOR_DELETE(v, i);
+				// }
 			}
 		}
 		
