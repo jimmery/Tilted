@@ -78,13 +78,13 @@ void rising_top()
 {
 	usleep(40);
 	if ( !mraa_gpio_read(top) ) {
-		printf("top press\n");
-		top_pressed = 1;
+		printf("top release\n");
+		top_pressed = 0;
 	}
 	else
 	{
-		printf("top release\n");
-		top_pressed = 0;
+		printf("top press\n");
+		top_pressed = 1;
 	}
 	run_flag = 0;
 }
