@@ -424,11 +424,6 @@ int main(int argc, char **argv) {
 				int i = 0; 
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
-					printf("printing out vector. \n");
-					printf("%s\n", VECTOR_GET(v, char*, i));
-				}
-				for (i = 0; i < VECTOR_TOTAL(v); i++)
-				{
 					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, i));
 					//perform request, res gets return code
 					res = curl_easy_perform(curl);
@@ -438,7 +433,6 @@ int main(int argc, char **argv) {
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 					usleep(25); 
 				}
-				printf("sending complete.\n");
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
 					VECTOR_DELETE(v, i);
