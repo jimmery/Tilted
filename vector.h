@@ -4,8 +4,8 @@
 #define VECTOR_INIT_CAPACITY 4
 
 #define VECTOR_INIT(vec) vector vec; vector_init(&vec)
-#define VECTOR_ADD(vec, item) vector_add(&vec, float item)
-#define VECTOR_SET(vec, id, item) vector_set(&vec, id, float item)
+#define VECTOR_ADD(vec, item) vector_add(&vec, (float) item)
+#define VECTOR_SET(vec, id, item) vector_set(&vec, id, (float) item)
 #define VECTOR_GET(vec, id) vector_get(&vec, id)
 #define VECTOR_DELETE(vec, id) vector_delete(&vec, id)
 #define VECTOR_TOTAL(vec) vector_total(&vec)
