@@ -433,6 +433,7 @@ int main(int argc, char **argv) {
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 					usleep(25); 
 				}
+				printf("sending complete.\n");
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
 					VECTOR_DELETE(v, i);
