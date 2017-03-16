@@ -435,6 +435,7 @@ int main(int argc, char **argv) {
 					char msg[100] = "";
 					sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", 
 							VECTOR_GET(x_vector, i), VECTOR_GET(z_vector, i), VECTOR_GET(y_vector, i)); 
+					printf("%s\n", msg); 
 					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
 					//perform request, res gets return code
 					res = curl_easy_perform(curl);
@@ -443,7 +444,7 @@ int main(int argc, char **argv) {
 						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 				}
-				printf("sending complete.\n");
+				//printf("sending complete.\n");
 				while (VECTOR_TOTAL(x_vector) > 0)
 				{
 					VECTOR_DELETE(x_vector, 0);
