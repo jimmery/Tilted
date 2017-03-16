@@ -219,7 +219,9 @@ int main(int argc, char **argv) {
 	acc_av.z = 0;
 
 	//vector v;
-	VECTOR_INIT(v);
+	VECTOR_INIT(x_vector);
+	VECTOR_INIT(y_vector);
+	VECTOR_INIT(z_vector);
 
 	//initialize sensors, set scale, and calculate resolution.
 	accel = accel_init();
@@ -411,8 +413,11 @@ int main(int argc, char **argv) {
 			//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
 			//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
-			char msg[100] = "";
-			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
+
+			VECTOR_ADD(x_vector, x_pos);
+			VECTOR_ADD(y_vector, y_pos);
+			VECTOR_ADD(z_vector, z_pos);
+
 			printf("%s\n", msg);
 			VECTOR_ADD(v, msg);
 		}
@@ -426,11 +431,14 @@ int main(int argc, char **argv) {
 				for (i = 0; i < VECTOR_TOTAL(v); i++)
 				{
 					printf("printing out vector. \n");
-					printf("%s\n", VECTOR_GET(v, i));
+					//printf("%s\n", VECTOR_GET(, i));
 				}
-				for (i = 0; i < VECTOR_TOTAL(v); i++)
+				for (i = 0; i < VECTOR_TOTAL(x_vector); i++)
 				{
-					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, i));
+					char msg[100] = "";
+					sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", 
+							VECTOR_GET(x_vector, i), VECTOR_GET(z_vector, i), VECTOR_GET(y_vector, i)); 
+					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
 					//perform request, res gets return code
 					res = curl_easy_perform(curl);
 					//check for errors
@@ -439,9 +447,11 @@ int main(int argc, char **argv) {
 					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 				}
 				printf("sending complete.\n");
-				while (VECTOR_TOTAL(v) > 0)
+				while (VECTOR_TOTAL(x_vector) > 0)
 				{
-					VECTOR_DELETE(v, 0);
+					VECTOR_DELETE(x_vector, 0);
+					VECTOR_DELETE(y_vector, 0);
+					VECTOR_DELETE(z_vector, 0);
 				}
 			}
 		}
