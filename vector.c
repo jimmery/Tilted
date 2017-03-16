@@ -34,7 +34,7 @@ void vector_add(vector *v, char *item)
     if (v->capacity == v->total)
         vector_resize(v, v->capacity * 2);
     v->items[v->total++] = malloc(100*sizeof(char));
-    printf("created new spot.\n");
+    printf("created new spot @ pos %d\n", v->total);
     strcpy(v->items[v->total], item);
     printf("stored new string %s\n", item);
 }
