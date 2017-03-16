@@ -169,8 +169,6 @@ int main(int argc, char **argv) {
 	//
 	CURL *curl;
 	CURLcode res;
-	
-	printf("start main function");
 
 	if (send) {
 		curl = curl_easy_init();
@@ -240,6 +238,7 @@ int main(int argc, char **argv) {
 	//printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
 	
 	//Read the sensor data and print them.
+	printf("You can start motion.\n");
 	while(1) {
 		if ( top_pressed ) {
 			accel_data = read_accel(accel, a_res);
@@ -415,6 +414,7 @@ int main(int argc, char **argv) {
 			VECTOR_ADD(v, msg);
 		}
 		else { // button has been released. 
+			printf("button is released.\n");
 			x_avg = 0;
 			y_avg = 0;
 			z_avg = 0;
