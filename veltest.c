@@ -168,8 +168,8 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	if ( argc > 0 )
-		send = 1;
+	//if ( argc > 0 )
+	//	send = 1;
 	//curl for firebase
 	//
 	CURL *curl;

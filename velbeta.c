@@ -168,8 +168,8 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-//	if ( argc > 0 )
-//		send = 1;
+	//if ( argc > 0 )
+	//	send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
@@ -277,12 +277,7 @@ int main(int argc, char **argv) {
 			// float newaccX = (accel_data.x - grav[0])*9.8;
 			// float newaccY = (accel_data.y - grav[1])*9.8;
 			// float newaccZ = (accel_data.z - grav[2])*9.8;	
-			
-				
 
-			//	x_acc_old = 0.5 * newaccX + 0.5 * x_acc_old;
-			//	y_acc_old = 0.5 * newaccY + 0.5 * y_acc_old;
-			//	z_acc_old = 0.5 * newaccZ + 0.5 * z_acc_old;
 			
 			Quat q_inv;
 			quatinv(&q, &q_inv);
@@ -309,12 +304,31 @@ int main(int argc, char **argv) {
 			z_acc_old = acc_av.z;
 
 			//double integration for position
-			if(x_acc_old <= 0.6 && x_acc_old >= -0.6)
+			if(x_acc_old <= 0.4 && x_acc_old >= -0.4)
 				x_acc_old = 0;
-			if(y_acc_old <= 0.6 && y_acc_old >= -0.6)
+			if(y_acc_old <= 0.4 && y_acc_old >= -0.4)
 				y_acc_old = 0;
-			if(z_acc_old <= 0.6 && z_acc_old >= -0.6)
+			if(z_acc_old <= 0.4 && z_acc_old >= -0.4)
 				z_acc_old = 0;
+
+
+			if(y_acc_old > 1 || y_acc_old < -1) 
+				x_acc_old = 0;
+			if(z_acc_old > 1 || z_acc_old < -1)
+				x_acc_old = 0;
+
+			if((x_acc_old > 2 || x_acc_old < -2) && (y_acc_old > 2 || y_acc_old < -2)) {
+				z_acc_old = 0;
+			}
+
+			if((y_acc_old > 2 || y_acc_old < -2) && (z_acc_old > 2 || z_acc_old < -2)) {
+				x_acc_old = 0;
+			}
+
+			if((z_acc_old > 2 || z_acc_old < -2) && (x_acc_old > 2 || x_acc_old < -2)) {
+				y_acc_old = 0;
+			}
+
 			
 			//movement_end_check
 			
@@ -368,8 +382,8 @@ int main(int argc, char **argv) {
 			if(x_counterP > 3) {
 				x_acc_old = x_acc_old / x_counterP;
 			}
-			x_avg += x_acc_old / 15;//1
-			x_pos += x_avg / 20; //180
+			x_avg += x_acc_old / 45;//1
+			x_pos += x_avg / 55; //180
 			
 		/*	else {
 			//	x_avg = 0;
@@ -388,8 +402,8 @@ int main(int argc, char **argv) {
 			if(y_counterP > 3) {
 				y_acc_old = y_acc_old / y_counterP;
 			}
-			y_avg += y_acc_old / 15;
-			y_pos += y_avg / 20;
+			y_avg += y_acc_old / 35;
+			y_pos += y_avg / 45;
 			
 				
 		/*	else {
@@ -399,12 +413,12 @@ int main(int argc, char **argv) {
 				y_counterP = 0;
 			}*/
 		
-			if(z_acc_old <= 1.5 && z_acc_old >= -1.5)
+			if(z_acc_old <= 0.8 && z_acc_old >= -0.8)
 				z_acc_old = 0;
 			if(z_motion == 0)
 				z_avg = 0;
-			z_avg += z_acc_old / 20;
-			z_pos += z_avg / 30;//280
+			z_avg += z_acc_old / 45;
+			z_pos += z_avg / 55;//280
 			
 			/*	else {
 			//	z_avg = 0;
