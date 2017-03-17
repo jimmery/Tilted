@@ -103,6 +103,9 @@ void rising_bot()
 	if ( !mraa_gpio_read(bot) )
 		return;
 	printf("bottom press\n");
+	x_pos = 0;
+	y_pos = 0; 
+	z_pos = 0;
 	run_flag = 0;
 }
 
@@ -197,9 +200,7 @@ int main(int argc, char **argv) {
 	mraa_gpio_dir(bot, MRAA_GPIO_IN);
 
 	mraa_gpio_isr(top, MRAA_GPIO_EDGE_BOTH, &rising_top, NULL);
-	//mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &rising_bot, NULL);
-	mraa_gpio_isr(top, MRAA_GPIO_EDGE_FALLING, &falling_top, NULL);
-	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_FALLING, &falling_bot, NULL);
+	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &rising_bot, NULL);
 
 	//initialize Omega to zero and prev_data
 	Omega.x = 0;
