@@ -78,11 +78,13 @@ void rising_top()
 {
 	usleep(40);
 	if ( !mraa_gpio_read(top) ) {
-		top_pressed = 1;
+		printf("top release\n");
+		top_pressed = 0;
 	}
 	else
 	{
-		top_pressed = 0;
+		printf("top press\n");
+		top_pressed = 1;
 	}
 	run_flag = 0;
 }
@@ -101,16 +103,19 @@ void rising_bot()
 	if ( !mraa_gpio_read(bot) )
 		return;
 	printf("bottom press\n");
+	x_pos = 0;
+	y_pos = 0; 
+	z_pos = 0;
 	run_flag = 0;
 }
 
-void falling_bot()
-{
-	usleep(40);
-	if (mraa_gpio_read(top) )
-		return;
-	printf("bottom release\n");
-}
+// void falling_bot()
+// {
+// 	usleep(40);
+// 	if (mraa_gpio_read(bot) )
+// 		return;
+// 	printf("bottom release\n");
+// }
 
 void fillQuat(Quat* quat)
 {
@@ -163,14 +168,12 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	//if ( argc > 0 )
+//	if ( argc > 0 )
 //		send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
 	CURLcode res;
-	
-	printf("start main function");
 
 	if (send) {
 		curl = curl_easy_init();
@@ -197,9 +200,7 @@ int main(int argc, char **argv) {
 	mraa_gpio_dir(bot, MRAA_GPIO_IN);
 
 	mraa_gpio_isr(top, MRAA_GPIO_EDGE_BOTH, &rising_top, NULL);
-	//mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &rising_bot, NULL);
-	mraa_gpio_isr(top, MRAA_GPIO_EDGE_FALLING, &falling_top, NULL);
-	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_FALLING, &falling_bot, NULL);
+	mraa_gpio_isr(bot, MRAA_GPIO_EDGE_RISING, &rising_bot, NULL);
 
 	//initialize Omega to zero and prev_data
 	Omega.x = 0;
@@ -219,7 +220,9 @@ int main(int argc, char **argv) {
 	acc_av.z = 0;
 
 	//vector v;
-	VECTOR_INIT(v);
+	VECTOR_INIT(x_vector);
+	VECTOR_INIT(y_vector);
+	VECTOR_INIT(z_vector);
 
 	//initialize sensors, set scale, and calculate resolution.
 	accel = accel_init();
@@ -240,6 +243,7 @@ int main(int argc, char **argv) {
 	//printf("x: %f y: %f z: %f\n", gyro_offset.x, gyro_offset.y, gyro_offset.z);
 	
 	//Read the sensor data and print them.
+	printf("You can start motion.\n");
 	while(1) {
 		if ( top_pressed ) {
 			accel_data = read_accel(accel, a_res);
@@ -297,6 +301,9 @@ int main(int argc, char **argv) {
 			acc_av.z = 0.5 * acc_av.z + (0.5 * acc.z)*9.8;
 
 			//define new variable just to see it work
+			acc_av.x *= 1.3;
+			acc_av.y *= 1.3;
+			
 			x_acc_old = acc_av.x;
 			y_acc_old = acc_av.y;
 			z_acc_old = acc_av.z;
@@ -320,7 +327,7 @@ int main(int argc, char **argv) {
 			else
 				countx = 0;
 
-			if(countx >= 10) {
+			if(countx >= 5) {
 				x_motion = 0;
 			}
 
@@ -329,7 +336,7 @@ int main(int argc, char **argv) {
 			else
 				county = 0;
 
-			if(county >= 10) {
+			if(county >= 5) {
 				y_motion = 0;
 			}
 
@@ -338,7 +345,7 @@ int main(int argc, char **argv) {
 			else
 				countz = 0;
 
-			if(countz >= 10) {
+			if(countz >= 5) {
 				z_motion = 0;
 			}
 
@@ -349,7 +356,7 @@ int main(int argc, char **argv) {
 
 			
 			//check motion and count accelerations over 1.2 m/s^2
-			if(x_acc_old <= 1.5 && x_acc_old >= -1.5) {
+			if(x_acc_old <= 0.8 && x_acc_old >= -0.8) {
 				x_acc_old = 0;
 			}
 			else
@@ -358,29 +365,32 @@ int main(int argc, char **argv) {
 				x_avg = 0;
 				x_counterP = 0;
 			}
-			if(x_counterP != 0) {
-				x_avg += x_acc_old / x_counterP / x_counterP;//1
-				x_pos += x_avg / 80; //180
+			if(x_counterP > 3) {
+				x_acc_old = x_acc_old / x_counterP;
 			}
+			x_avg += x_acc_old / 15;//1
+			x_pos += x_avg / 20; //180
+			
 		/*	else {
 			//	x_avg = 0;
 				if (x_avg < 10 && x_avg > -10)
 					x_avg = 0;
 				x_counterP = 0;
 			}*/
-			if(y_acc_old <= 1.5 && y_acc_old >= -1.5) {
+			if(y_acc_old <= 0.8 && y_acc_old >= -0.8) 
 				y_acc_old = 0;
-			}
 			else
 				y_counterP++;
 			if(y_motion == 0) {
 				y_avg = 0;
 				y_counterP = 0;
 			}
-			if(y_counterP != 0) {
-				y_avg += y_acc_old / y_counterP / y_counterP;
-				y_pos += y_avg / 160;
+			if(y_counterP > 3) {
+				y_acc_old = y_acc_old / y_counterP;
 			}
+			y_avg += y_acc_old / 15;
+			y_pos += y_avg / 20;
+			
 				
 		/*	else {
 			//	y_avg = 0;
@@ -405,31 +415,49 @@ int main(int argc, char **argv) {
 			//printf("X: %f\t Y: %f\t Z: %f\n\n", gyro_data.x - gyro_offset.x, gyro_data.y - gyro_offset.y, gyro_data.z - gyro_offset.z);
 			//printf("AccX: %f\t AccY: %f\t AccZ: %f\n\n", accel_data.x, accel_data.y, accel_data.z);
 			//printf("OmegaX: %f\n OmegaY: %f\n OmegaZ: %f\n\n", Omega.x,Omega.y,Omega.z);
-			//printf("newaccX: %f\t newaccY: %f\t newaccZ: %f\n\n", newaccX, newaccY, newaccZ);
+			//printf(" %f\t %f\t %f\n", acc_av.x, acc_av.y, acc_av.z);
 			//printf("x_acc: %f\t y_acc: %f\t z_acc: %f\n\n", x_acc_old, y_acc_old, z_acc_old);
 			//printf("av_accX: %f\t av_accY: %f\t av_accZ: %f\t mag_acc: %f\n", av_accX, av_accY, av_accZ, mag_av_acc);
 
-			//printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
-			char msg[100] = "";
-			sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", x_pos, z_pos, y_pos); 
-			VECTOR_ADD(v, msg);
+			printf("%f\t %f\t %f\n", x_pos, y_pos, z_pos);
+
+			VECTOR_ADD(x_vector, x_pos);
+			VECTOR_ADD(y_vector, y_pos);
+			VECTOR_ADD(z_vector, z_pos);
 		}
 		else { // button has been released. 
+			x_avg = 0;
+			y_avg = 0;
+			z_avg = 0;
 			if ( send ) { 
-				while (VECTOR_TOTAL(v) > 0)
+				//while (VECTOR_TOTAL(v) > 0)
+				int i = 0; 
+				// for (i = 0; i < VECTOR_TOTAL(v); i++)
+				// {
+				// 	printf("printing out vector. \n");
+				// 	//printf("%s\n", VECTOR_GET(, i));
+				// }
+				for (i = 0; i < VECTOR_TOTAL(x_vector); i++)
 				{
-					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, VECTOR_GET(v, char*, 0));
+					char msg[100] = "";
+					sprintf(msg, "{\"X\":\"%f\",\"Y\":\"%f\",\"Z\":\"%f\"}", 
+							VECTOR_GET(x_vector, i), VECTOR_GET(z_vector, i), VECTOR_GET(y_vector, i)); 
+					printf("%s\n", msg); 
+					curl_easy_setopt(curl, CURLOPT_POSTFIELDS, msg);
 					//perform request, res gets return code
 					res = curl_easy_perform(curl);
 					//check for errors
 					if(res != CURLE_OK)
 						fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-					VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions? 
+					//VECTOR_DELETE(v, 0); // pretty inefficient but removes race conditions?
 				}
-				// for (i = 0; i < VECTOR_TOTAL(v); i++)
-				// {
-				// 	VECTOR_DELETE(v, i);
-				// }
+				//printf("sending complete.\n");
+				while (VECTOR_TOTAL(x_vector) > 0)
+				{
+					VECTOR_DELETE(x_vector, 0);
+					VECTOR_DELETE(y_vector, 0);
+					VECTOR_DELETE(z_vector, 0);
+				}
 			}
 		}
 		
@@ -443,6 +471,3 @@ int main(int argc, char **argv) {
 	}	
 	return 0;	
 }
-
-
-
