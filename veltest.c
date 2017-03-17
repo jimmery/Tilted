@@ -109,13 +109,13 @@ void rising_bot()
 	run_flag = 0;
 }
 
-void falling_bot()
-{
-	usleep(40);
-	if (mraa_gpio_read(top) )
-		return;
-	printf("bottom release\n");
-}
+// void falling_bot()
+// {
+// 	usleep(40);
+// 	if (mraa_gpio_read(bot) )
+// 		return;
+// 	printf("bottom release\n");
+// }
 
 void fillQuat(Quat* quat)
 {
