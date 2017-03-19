@@ -312,22 +312,16 @@ int main(int argc, char **argv) {
 				z_acc_old = 0;
 
 
-			if(y_acc_old > 1 || y_acc_old < -1) 
-				x_acc_old = 0;
-			if(z_acc_old > 1 || z_acc_old < -1)
-				x_acc_old = 0;
-
-			if((x_acc_old > 2 || x_acc_old < -2) && (y_acc_old > 2 || y_acc_old < -2)) {
+			if((x_acc_old > 2 || x_acc_old < -2) && (y_acc_old > 2 || y_acc_old < -2))
 				z_acc_old = 0;
-			}
+	
 
-			if((y_acc_old > 2 || y_acc_old < -2) && (z_acc_old > 2 || z_acc_old < -2)) {
+			if((y_acc_old > 2 || y_acc_old < -2) && (z_acc_old > 2 || z_acc_old < -2)) 
 				x_acc_old = 0;
-			}
 
-			if((z_acc_old > 2 || z_acc_old < -2) && (x_acc_old > 2 || x_acc_old < -2)) {
+
+			if((z_acc_old > 2 || z_acc_old < -2) && (x_acc_old > 2 || x_acc_old < -2)) 
 				y_acc_old = 0;
-			}
 
 			
 			//movement_end_check
@@ -382,8 +376,8 @@ int main(int argc, char **argv) {
 			if(x_counterP > 3) {
 				x_acc_old = x_acc_old / x_counterP;
 			}
-			x_avg += x_acc_old / 30;//1
-			x_pos += x_avg / 40; //180
+			x_avg += x_acc_old / 45;//1
+			x_pos += x_avg / 55; //180
 			
 		/*	else {
 			//	x_avg = 0;
@@ -402,8 +396,8 @@ int main(int argc, char **argv) {
 			if(y_counterP > 3) {
 				y_acc_old = y_acc_old / y_counterP;
 			}
-			y_avg += y_acc_old / 30;
-			y_pos += y_avg / 40;
+			y_avg += y_acc_old / 35;
+			y_pos += y_avg / 45;
 			
 				
 		/*	else {
@@ -417,8 +411,8 @@ int main(int argc, char **argv) {
 				z_acc_old = 0;
 			if(z_motion == 0)
 				z_avg = 0;
-			z_avg += z_acc_old / 35;
-			z_pos += z_avg / 45;//280
+			z_avg += z_acc_old / 45;
+			z_pos += z_avg / 55;//280
 			
 			/*	else {
 			//	z_avg = 0;

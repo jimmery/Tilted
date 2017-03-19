@@ -168,8 +168,8 @@ void quatrotate(const Quat* const q, struct accel* a) {
 
 int main(int argc, char **argv) {
 	int send = 0; 
-	//if ( argc > 0 )
-	//	send = 1;
+	if ( argc > 0 )
+		send = 1;
 	//curl for firebase
 	//
 	CURL *curl;
@@ -312,22 +312,16 @@ int main(int argc, char **argv) {
 				z_acc_old = 0;
 
 
-			if(y_acc_old > 1 || y_acc_old < -1) 
-				x_acc_old = 0;
-			if(z_acc_old > 1 || z_acc_old < -1)
-				x_acc_old = 0;
-
-			if((x_acc_old > 2 || x_acc_old < -2) && (y_acc_old > 2 || y_acc_old < -2)) {
+			if((x_acc_old > 2 || x_acc_old < -2) && (y_acc_old > 2 || y_acc_old < -2))
 				z_acc_old = 0;
-			}
+	
 
-			if((y_acc_old > 2 || y_acc_old < -2) && (z_acc_old > 2 || z_acc_old < -2)) {
+			if((y_acc_old > 2 || y_acc_old < -2) && (z_acc_old > 2 || z_acc_old < -2)) 
 				x_acc_old = 0;
-			}
 
-			if((z_acc_old > 2 || z_acc_old < -2) && (x_acc_old > 2 || x_acc_old < -2)) {
+
+			if((z_acc_old > 2 || z_acc_old < -2) && (x_acc_old > 2 || x_acc_old < -2)) 
 				y_acc_old = 0;
-			}
 
 			
 			//movement_end_check
